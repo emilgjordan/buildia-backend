@@ -13,6 +13,7 @@ export abstract class EntityRepository<T extends Document> {
 
   async create(createEntityData: unknown): Promise<T> {
     const entity = new this.entityModel(createEntityData);
+    console.log('hi');
     return entity.save();
   }
 }
