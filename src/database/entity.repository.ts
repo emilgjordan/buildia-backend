@@ -1,4 +1,4 @@
-import { Document, FilterQuery, Model } from 'mongoose';
+import { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
 
 export abstract class EntityRepository<T extends Document> {
   constructor(protected readonly entityModel: Model<T>) {}
@@ -11,9 +11,28 @@ export abstract class EntityRepository<T extends Document> {
     return this.entityModel.find(entityFilterQuery).exec();
   }
 
-  async create(createEntityData: unknown): Promise<T> {
+  async create(createEntityData: Partial<T>): Promise<T> {
     const entity = new this.entityModel(createEntityData);
-    console.log('hi');
     return entity.save();
+  }
+
+  async updateOne(
+    entityFilterQuery: FilterQuery<T>,
+    updateEntityData: UpdateQuery<T>,
+  ): Promise<T | null> {
+    return this.entityModel.findOneAndUpdate(
+      entityFilterQuery,
+      updateEntityData,
+      {
+        new: true,
+      },
+    );
+  }
+
+  async deleteOne(
+    entityFilterQuery: FilterQuery<T>,
+  ): Promise<{ deletedCount?: number }> {
+    const result = await this.entityModel.deleteOne(entityFilterQuery).exec();
+    return { deletedCount: result.deletedCount };
   }
 }
