@@ -13,26 +13,24 @@ export abstract class EntityRepository<T extends Document> {
 
   async create(createEntityData: Partial<T>): Promise<T> {
     const entity = new this.entityModel(createEntityData);
-    return entity.save();
+    return entity.save() as Promise<T>;
   }
 
   async updateOne(
     entityFilterQuery: FilterQuery<T>,
     updateEntityData: UpdateQuery<T>,
   ): Promise<T | null> {
-    return this.entityModel.findOneAndUpdate(
-      entityFilterQuery,
-      updateEntityData,
-      {
+    return this.entityModel
+      .findOneAndUpdate(entityFilterQuery, updateEntityData, {
         new: true,
-      },
-    );
+      })
+      .exec();
   }
 
   async deleteOne(
     entityFilterQuery: FilterQuery<T>,
   ): Promise<{ deletedCount?: number }> {
-    const result = await this.entityModel.deleteOne(entityFilterQuery).exec();
+    const result = await this.entityModel.deleteOne(entityFilterQuery);
     return { deletedCount: result.deletedCount };
   }
 }
