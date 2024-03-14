@@ -2,13 +2,13 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { UsersRepository } from '../../repository/users.repository';
 import { User, UserDocument } from '../../schemas/user.schema';
-import { UserModel } from '../support/user.model';
+import { UserMockModel } from '../support/user.model';
 import { FilterQuery } from 'mongoose';
 import { userStub } from '../stubs/user.stubs';
 
 describe('UsersRepository', () => {
   let usersRepository: UsersRepository;
-  let userModel: UserModel;
+  let userModel: UserMockModel;
   let userFilterQuery: FilterQuery<UserDocument>;
 
   beforeEach(async () => {
@@ -17,13 +17,13 @@ describe('UsersRepository', () => {
         UsersRepository,
         {
           provide: getModelToken(User.name),
-          useClass: UserModel,
+          useValue: UserMockModel,
         },
       ],
     }).compile();
 
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
-    userModel = moduleRef.get<UserModel>(getModelToken(User.name));
+    userModel = moduleRef.get<UserMockModel>(getModelToken(User.name));
     userFilterQuery = { _id: userStub()._id };
 
     jest.clearAllMocks();
@@ -74,8 +74,9 @@ describe('UsersRepository', () => {
       let constructorSpy: jest.SpyInstance;
 
       beforeEach(async () => {
-        saveSpy = jest.spyOn(UserModel.prototype, 'save');
-        constructorSpy = jest.spyOn(UserModel.prototype, 'constructorSpy');
+        saveSpy = jest.spyOn(UserMockModel.prototype, 'save');
+        constructorSpy = jest.spyOn(UserMockModel.prototype, 'constructorSpy');
+
         user = await usersRepository.create(userStub());
       });
 
