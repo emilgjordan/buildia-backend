@@ -7,20 +7,22 @@ export function mockModelFactory<T>(entityStub: T) {
 
     constructorSpy(_createEntityData): void {}
 
-    static findOne(): { exec: () => Promise<T> } {
-      return { exec: jest.fn().mockResolvedValue(entityStub) };
+    static findOne = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve(entityStub) });
+
+    static find = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve([entityStub]) });
+
+    save(): Promise<T> {
+      return Promise.resolve(entityStub);
     }
 
-    static find(): { exec: () => Promise<T[]> } {
-      return { exec: jest.fn().mockResolvedValue([entityStub]) };
-    }
+    static findOneAndUpdate = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve(entityStub) });
 
-    save = jest.fn().mockResolvedValue(entityStub);
-
-    static findOneAndUpdate(): { exec: () => Promise<T> } {
-      return { exec: jest.fn().mockResolvedValue(entityStub) };
-    }
-
-    deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
+    static deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
   };
 }
