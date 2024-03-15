@@ -2,13 +2,13 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { UsersRepository } from '../../repository/users.repository';
 import { User, UserDocument } from '../../schemas/user.schema';
-import { UserMockModel } from '../mocks/user.model.mock';
+import { UserModelMock } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
 import { userStub } from '../stubs/user.stubs';
 
 describe('UsersRepository', () => {
   let usersRepository: UsersRepository;
-  let userModel: typeof UserMockModel;
+  let userModel: typeof UserModelMock;
   let userFilterQuery: FilterQuery<UserDocument>;
 
   beforeEach(async () => {
@@ -17,7 +17,7 @@ describe('UsersRepository', () => {
         UsersRepository,
         {
           provide: getModelToken(User.name),
-          useValue: UserMockModel,
+          useValue: UserModelMock,
         },
       ],
     }).compile();
