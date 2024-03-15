@@ -1,29 +1,28 @@
-export abstract class MockModel<T> {
-  protected abstract entityStub: T;
+export function mockModelFactory<T>(entityStub: T) {
+  return class {
+    constructor(createEntityData: T) {
+      Object.assign(this, createEntityData);
+      this.constructorSpy(createEntityData);
+    }
 
-  constructor(createEntityData: T) {
-    this.constructorSpy(createEntityData);
-  }
+    constructorSpy(_createEntityData): void {}
 
-  constructorSpy(_createEntityData): void {}
+    static findOne = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve(entityStub) });
 
-  findOne(): { exec: () => Promise<T> } {
-    return { exec: (): Promise<T> => Promise.resolve(this.entityStub) };
-  }
+    static find = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve([entityStub]) });
 
-  find(): { exec: () => Promise<T[]> } {
-    return { exec: (): Promise<T[]> => Promise.resolve([this.entityStub]) };
-  }
+    save(): Promise<T> {
+      return Promise.resolve(entityStub);
+    }
 
-  async save(): Promise<T> {
-    return this.entityStub;
-  }
+    static findOneAndUpdate = jest
+      .fn()
+      .mockReturnValue({ exec: () => Promise.resolve(entityStub) });
 
-  findOneAndUpdate(): { exec: () => Promise<T> } {
-    return { exec: (): Promise<T> => Promise.resolve(this.entityStub) };
-  }
-
-  async deleteOne(): Promise<{ deletedCount?: number }> {
-    return { deletedCount: 1 };
-  }
+    static deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
+  };
 }

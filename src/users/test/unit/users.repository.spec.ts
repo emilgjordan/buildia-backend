@@ -2,13 +2,13 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { UsersRepository } from '../../repository/users.repository';
 import { User, UserDocument } from '../../schemas/user.schema';
-import { UserMockModel } from '../support/user.model';
+import { UserMockModel } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
 import { userStub } from '../stubs/user.stubs';
 
 describe('UsersRepository', () => {
   let usersRepository: UsersRepository;
-  let userModel: UserMockModel;
+  let userModel: typeof UserMockModel;
   let userFilterQuery: FilterQuery<UserDocument>;
 
   beforeEach(async () => {
@@ -23,7 +23,7 @@ describe('UsersRepository', () => {
     }).compile();
 
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
-    userModel = moduleRef.get<UserMockModel>(getModelToken(User.name));
+    userModel = moduleRef.get(getModelToken(User.name));
     userFilterQuery = { _id: userStub()._id };
 
     jest.clearAllMocks();
@@ -32,9 +32,7 @@ describe('UsersRepository', () => {
   describe('findOne', () => {
     describe('when findOne is called', () => {
       let user: User;
-
       beforeEach(async () => {
-        jest.spyOn(userModel, 'findOne');
         user = await usersRepository.findOne(userFilterQuery);
       });
 
@@ -53,7 +51,6 @@ describe('UsersRepository', () => {
       let users: User[];
 
       beforeEach(async () => {
-        jest.spyOn(userModel, 'find');
         users = await usersRepository.findMany(userFilterQuery);
       });
 
@@ -74,8 +71,8 @@ describe('UsersRepository', () => {
       let constructorSpy: jest.SpyInstance;
 
       beforeEach(async () => {
-        saveSpy = jest.spyOn(UserMockModel.prototype, 'save');
-        constructorSpy = jest.spyOn(UserMockModel.prototype, 'constructorSpy');
+        saveSpy = jest.spyOn(userModel.prototype, 'save');
+        constructorSpy = jest.spyOn(userModel.prototype, 'constructorSpy');
 
         user = await usersRepository.create(userStub());
       });
@@ -96,7 +93,6 @@ describe('UsersRepository', () => {
       let user: User;
 
       beforeEach(async () => {
-        jest.spyOn(userModel, 'findOneAndUpdate');
         user = await usersRepository.updateOne(userFilterQuery, userStub());
       });
 
@@ -119,7 +115,6 @@ describe('UsersRepository', () => {
       let result: { deletedCount?: number };
 
       beforeEach(async () => {
-        jest.spyOn(userModel, 'deleteOne');
         result = await usersRepository.deleteOne(userFilterQuery);
       });
 
