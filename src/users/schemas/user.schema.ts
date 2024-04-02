@@ -6,7 +6,10 @@ export type UserDocument = User & Document;
 @Schema()
 export class User {
   @Prop({ required: true })
-  name: string;
+  firstName: string;
+
+  @Prop({ required: true })
+  lastName: string;
 
   @Prop({
     required: true,
@@ -24,7 +27,28 @@ export class User {
   username: string;
 
   @Prop({ required: true })
-  password: string;
+  hashedPassword: string;
+
+  @Prop()
+  bio: string;
+
+  @Prop()
+  portfolioUrl: string;
+
+  @Prop()
+  skills: string[];
+
+  @Prop()
+  projects: string[];
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop({ default: false })
+  isPremium: boolean;
+
+  @Prop({ default: 'user' })
+  role: string;
 
   @Prop({ default: () => Date.now() })
   createdAt: Date;

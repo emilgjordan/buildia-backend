@@ -1,12 +1,17 @@
-import { updatedUserStub, userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stubs';
 
-export const UserService = jest.fn().mockReturnValue({
-  findOneById: jest.fn().mockResolvedValue(userStub()),
-  findOneByUsername: jest.fn().mockResolvedValue(userStub()),
-  findAll: jest.fn().mockResolvedValue([userStub()]),
-  create: jest.fn().mockResolvedValue(userStub()),
-  update: jest.fn().mockResolvedValue(updatedUserStub()),
-  remove: jest
+export class UsersServiceMock {
+  getUserById = jest.fn().mockResolvedValue(userStub());
+
+  getUserByUsername = jest.fn().mockResolvedValue(userStub());
+
+  getUsers = jest.fn().mockResolvedValue([userStub()]);
+
+  createUser = jest.fn().mockResolvedValue(userStub());
+
+  updateUser = jest.fn().mockResolvedValue(userStub());
+
+  removeUser = jest
     .fn()
-    .mockResolvedValue({ message: 'User was deleted successfully.' }),
-});
+    .mockResolvedValue({ message: 'User was deleted successfully.' });
+}

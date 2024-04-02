@@ -1,18 +1,61 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UsersRepository } from '../repository/users.repository';
+import { FilterQuery } from 'mongoose';
+import { User, UserDocument } from '../schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor() {}
+  constructor(private userRepository: UsersRepository) {}
 
-  async findOneById(userId: string) {}
+  async getUserById(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ _id: userId });
+    return user;
+  }
 
-  async findOneByUsername(username: string) {}
+  async getUserByUsername(username: string): Promise<User> {
+    const user = await this.userRepository.findOne({ username: username });
+    return user;
+  }
 
-  async findAll() {}
+  async getUsers(userFilterQuery: FilterQuery<UserDocument>): Promise<User[]> {
+    const users = await this.userRepository.findMany(userFilterQuery);
+    return users;
+  }
 
-  async create() {}
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const { username, email } = createUserDto;
+    const userExists = await this.userRepository.findOne({
+      $or: [{ username: username }, { email: email }],
+    });
+    if (userExists) {
+      throw new Error('Username or email already exists');
+    }
+    const createdUser = this.userRepository.create(createUserDto);
+    return createdUser;
+  }
 
-  async update() {}
+  async updateUser(
+    targetUserId: string,
+    updateUserDto: Partial<User>,
+  ): Promise<User> {
+    const userExists = await this.userRepository.findOne({ _id: targetUserId });
+    if (!userExists) {
+      throw new Error('User does not exist');
+    }
+    return this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
+  }
 
-  async remove() {}
+  async removeUser(targetUserId): Promise<{ message: string }> {
+    // if (targetUserId !== currentUserId) {
+    //   throw new UnauthorizedException('You do not have permission to perform this action.');
+    // } FOR LATER IMPLEMENTATION
+    const result = await this.userRepository.deleteOne({ _id: targetUserId });
+    if (result.deletedCount === 0) {
+      return { message: `User with ID '${targetUserId}' not found.` };
+    }
+    return {
+      message: `User with ID '${targetUserId}' was deleted successfully.`,
+    };
+  }
 }
