@@ -5,11 +5,12 @@ import { userStub } from '../stubs/user.stubs';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { CreateUserDto } from '../../../users/dto/create-user.dto';
+import { INestApplication } from '@nestjs/common';
 
 describe('User Controller (e2e)', () => {
   let dbConnection: Connection;
   let httpServer: any;
-  let app: any;
+  let app: INestApplication;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
