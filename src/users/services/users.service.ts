@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/input/create-user.input';
 import { UsersRepository } from '../repository/users.repository';
 import { FilterQuery } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';

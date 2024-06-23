@@ -4,7 +4,7 @@ import { DatabaseService } from '../../../database/database.service';
 import { userStub } from '../stubs/user.stubs';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
-import { CreateUserDto } from '../../../users/dto/create-user.dto';
+import { CreateUserDto } from '../../dto/input/create-user.input';
 import { INestApplication } from '@nestjs/common';
 
 describe('User Controller (e2e)', () => {

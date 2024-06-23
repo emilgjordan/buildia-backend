@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/input/create-user.input';
 import { User, UserDocument } from '../schemas/user.schema';
 import { FilterQuery } from 'mongoose';
 // import { AuthGuard } from '@nestjs/passport';
@@ -23,7 +23,6 @@ export class UsersController {
   getUser(@Param('userId') userId: string): Promise<User> {
     return this.usersService.getUserById(userId);
   }
-
   @Get()
   async getUsers(
     @Body() userFilterQuery: FilterQuery<UserDocument>,
