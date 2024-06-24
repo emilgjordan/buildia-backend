@@ -1,6 +1,6 @@
 import { User } from '../../schemas/user.schema';
 import { Types } from 'mongoose';
-export const userStub = (): User & { _id: Types.ObjectId } => {
+export const userStub = (): User => {
   return {
     firstName: 'Emil',
     lastName: 'Jordan',
@@ -16,6 +16,6 @@ export const userStub = (): User & { _id: Types.ObjectId } => {
     role: 'user',
     createdAt: new Date(2006, 6, 23),
     updatedAt: new Date(2024, 2, 20),
-    _id: new Types.ObjectId('507f191e810c19729de860ea'),
+    userId: '507f191e810c19729de860ea',
   };
 };

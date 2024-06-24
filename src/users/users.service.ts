@@ -1,29 +1,45 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/input/create-user.input';
-import { UsersRepository } from '../repository/users.repository';
+import { CreateUserInput } from './dto/input/create-user.input';
+import { UsersRepository } from './users.repository';
 import { FilterQuery } from 'mongoose';
-import { User, UserDocument } from '../schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
   constructor(private userRepository: UsersRepository) {}
 
+  private transformToUser(userDocument: UserDocument): User {
+    const { _id, __v, ...user } = userDocument.toObject();
+    return { ...user, userId: _id.toString() };
+  }
+
   async getUserById(userId: string): Promise<User> {
-    const user = await this.userRepository.findOne({ _id: userId });
-    return user;
+    return this.userRepository
+      .findOne({ _id: userId })
+      .then((userDocument) =>
+        userDocument ? this.transformToUser(userDocument) : null,
+      );
   }
 
   async getUserByUsername(username: string): Promise<User> {
-    const user = await this.userRepository.findOne({ username: username });
-    return user;
+    return this.userRepository
+      .findOne({
+        username: username,
+      })
+      .then((userDocument) =>
+        userDocument ? this.transformToUser(userDocument) : null,
+      );
   }
 
-  async getUsers(userFilterQuery: FilterQuery<UserDocument>): Promise<User[]> {
-    const users = await this.userRepository.findMany(userFilterQuery);
-    return users;
+  async getUsers(userFilterQuery: FilterQuery<User>): Promise<User[]> {
+    return this.userRepository
+      .findMany(userFilterQuery)
+      .then((userDocuments) =>
+        userDocuments.map((userDocument) => this.transformToUser(userDocument)),
+      );
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserInput): Promise<User> {
     const { username, email } = createUserDto;
     const userExists = await this.userRepository.findOne({
       $or: [{ username: username }, { email: email }],
@@ -31,8 +47,9 @@ export class UsersService {
     if (userExists) {
       throw new Error('Username or email already exists');
     }
-    const createdUser = this.userRepository.create(createUserDto);
-    return createdUser;
+    return this.userRepository
+      .create(createUserDto)
+      .then((createdUserDocument) => this.transformToUser(createdUserDocument));
   }
 
   async updateUser(
@@ -43,7 +60,9 @@ export class UsersService {
     if (!userExists) {
       throw new Error('User does not exist');
     }
-    return this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
+    return this.userRepository
+      .updateOne({ _id: targetUserId }, updateUserDto)
+      .then((updatedUserDoc) => this.transformToUser(updatedUserDoc));
   }
 
   async removeUser(targetUserId): Promise<{ message: string }> {
