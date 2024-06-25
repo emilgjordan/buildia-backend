@@ -1,6 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
-import { UsersRepository } from '../../repository/users.repository';
+import { UsersRepository } from '../../../repositories/users.repository';
 import { User, UserDocument } from '../../schemas/user.schema';
 import { UserModelMock } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
