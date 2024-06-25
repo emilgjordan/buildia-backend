@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateUserInput } from './dto/input/create-user.input';
-import { UsersRepository } from './users.repository';
+import { CreateUserInput } from '../dto/input/create-user.input';
+import { UsersRepository } from '../repositories/users.repository';
 import { FilterQuery } from 'mongoose';
-import { User, UserDocument } from './schemas/user.schema';
+import { User, UserDocument } from '../schemas/user.schema';
 
 @Injectable()
 export class UsersService {
