@@ -5,27 +5,37 @@ import { UserFilterInput } from '../dto/input/user-filter.input';
 import { CreateUserInput } from '../dto/input/create-user.input';
 import { UpdateUserInput } from '../dto/input/update-user.input';
 import { RemoveUserOutput } from '../dto/output/remove-user.output';
+import { GqlAuthGuard } from 'src/auth/guards/gql-auth.guard';
+import { UseGuards } from '@nestjs/common';
+import { CreateUserOutput } from '../dto/output/create-user.output';
+import { AuthService } from '../../auth/auth.service';
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private usersService: UsersService) {}
-  @Query(() => User)
+  constructor(
+    private usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
+  @Query(() => User, { name: 'user' })
   async getUser(@Args('userId') userId: string): Promise<User> {
     return this.usersService.getUserById(userId);
   }
-  @Query(() => [User])
+  @Query(() => [User], { name: 'users' })
   async getUsers(
     @Args('filter', { nullable: true }) filter?: UserFilterInput,
   ): Promise<User[]> {
     return this.usersService.getUsers(filter);
   }
-  @Mutation(() => User)
+  @Mutation(() => CreateUserOutput)
   async createUser(
     @Args('createUserData') createUserData: CreateUserInput,
-  ): Promise<User> {
-    return this.usersService.createUser(createUserData);
+  ): Promise<CreateUserOutput> {
+    const user = await this.usersService.createUser(createUserData);
+    const loginResponse = this.authService.login(user);
+    return { user, accessToken: loginResponse.access_token };
   }
   @Mutation(() => User)
+  @UseGuards(GqlAuthGuard)
   async updateUser(
     @Args('userId') userId: string,
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
@@ -33,6 +43,7 @@ export class UsersResolver {
     return this.usersService.updateUser(userId, updateUserInput);
   }
   @Mutation(() => RemoveUserOutput)
+  @UseGuards(GqlAuthGuard)
   async removeUser(
     @Args('userId') userId: string,
   ): Promise<{ message: string }> {
