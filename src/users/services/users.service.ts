@@ -31,6 +31,16 @@ export class UsersService {
       );
   }
 
+  async getUserByEmail(email: string): Promise<User> {
+    return this.userRepository
+      .findOne({
+        email: email,
+      })
+      .then((userDocument) =>
+        userDocument ? this.transformToUser(userDocument) : null,
+      );
+  }
+
   async getUsers(userFilterQuery: FilterQuery<User>): Promise<User[]> {
     return this.userRepository
       .findMany(userFilterQuery)
