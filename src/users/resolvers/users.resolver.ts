@@ -10,6 +10,7 @@ import { UseGuards } from '@nestjs/common';
 import { CreateUserOutput } from '../dto/output/create-user.output';
 import { AuthService } from '../../auth/auth.service';
 import { UserDocument } from '../schemas/user.schema';
+import { CurrentUser } from 'src/auth/current-user.decorator';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -45,33 +46,20 @@ export class UsersResolver {
   async updateUser(
     @Args('userId') userId: string,
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
+    @CurrentUser() currentUser: User,
   ): Promise<User> {
-    return this.usersService.updateUser(userId, updateUserInput);
+    return this.usersService.updateUser(
+      currentUser.userId,
+      userId,
+      updateUserInput,
+    );
   }
   @Mutation(() => RemoveUserOutput)
   @UseGuards(GqlAuthGuard)
   async removeUser(
     @Args('userId') userId: string,
+    @CurrentUser() currentUser: User,
   ): Promise<{ message: string }> {
-    return this.usersService.removeUser(userId);
+    return this.usersService.removeUser(currentUser.userId, userId);
   }
 }
-
-// let newUser = {
-//   firstName: 'Emil',
-//   lastName: 'Jordan',
-//   email: 'emiljordan@example.com',
-//   username: 'emiljordan',
-//   hashedPassword: 'password123',
-//   bio: 'This is a test bio',
-//   portfolioUrl: 'https://www.emiljordan.com',
-//   skills: ['javascript', 'typescript', 'nodejs', 'nestjs'],
-//   projects: ['project1', 'project2'],
-//   isEmailVerified: false,
-//   isPremium: false,
-//   role: 'user',
-//   createdAt: new Date(2006, 6, 23),
-//   updatedAt: new Date(2024, 2, 20),
-//   userId: 123123,
-// };
-// return newUser;

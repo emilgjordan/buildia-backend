@@ -76,6 +76,7 @@ export class UsersService {
   }
 
   async updateUser(
+    currentUserId: string,
     targetUserId: string,
     updateUserDto: Partial<User>,
   ): Promise<User> {
@@ -83,15 +84,25 @@ export class UsersService {
     if (!userExists) {
       throw new Error('User does not exist');
     }
+    if (targetUserId !== currentUserId) {
+      throw new UnauthorizedException(
+        'You do not have permission to perform this action.',
+      );
+    }
     return this.userRepository
       .updateOne({ _id: targetUserId }, updateUserDto)
       .then((updatedUserDoc) => this.transformToUser(updatedUserDoc));
   }
 
-  async removeUser(targetUserId): Promise<{ message: string }> {
-    // if (targetUserId !== currentUserId) {
-    //   throw new UnauthorizedException('You do not have permission to perform this action.');
-    // } FOR LATER IMPLEMENTATION
+  async removeUser(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<{ message: string }> {
+    if (targetUserId !== currentUserId) {
+      throw new UnauthorizedException(
+        'You do not have permission to perform this action.',
+      );
+    }
     const result = await this.userRepository.deleteOne({ _id: targetUserId });
     if (result.deletedCount === 0) {
       return { message: `User with ID '${targetUserId}' not found.` };
