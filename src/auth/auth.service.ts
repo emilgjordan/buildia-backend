@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/models/user.model';
 
 import { UsersService } from '../users/services/users.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
       return null;
     }
 
-    const passwordIsValid = password === user.hashedPassword;
+    const passwordIsValid = await bcrypt.compare(password, user.hashedPassword);
     return passwordIsValid ? user : null;
   }
 

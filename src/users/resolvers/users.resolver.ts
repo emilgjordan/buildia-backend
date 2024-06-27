@@ -9,6 +9,7 @@ import { GqlAuthGuard } from 'src/auth/guards/gql-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { CreateUserOutput } from '../dto/output/create-user.output';
 import { AuthService } from '../../auth/auth.service';
+import { UserDocument } from '../schemas/user.schema';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -16,6 +17,11 @@ export class UsersResolver {
     private usersService: UsersService,
     private readonly authService: AuthService,
   ) {}
+
+  private transformToUser(userDocument: UserDocument): User {
+    const { _id, __v, ...user } = userDocument.toObject();
+    return { ...user, userId: _id.toString() };
+  }
   @Query(() => User, { name: 'user' })
   async getUser(@Args('userId') userId: string): Promise<User> {
     return this.usersService.getUserById(userId);

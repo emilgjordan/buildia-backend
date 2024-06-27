@@ -3,6 +3,7 @@ import { CreateUserInput } from '../dto/input/create-user.input';
 import { UsersRepository } from '../repositories/users.repository';
 import { FilterQuery } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -57,8 +58,20 @@ export class UsersService {
     if (userExists) {
       throw new Error('Username or email already exists');
     }
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(
+      createUserDto.password,
+      saltRounds,
+    );
+
+    const { password, ...userDetails } = createUserDto;
+    const newUser = {
+      ...userDetails,
+      hashedPassword: hashedPassword,
+    };
+
     return this.userRepository
-      .create(createUserDto)
+      .create(newUser)
       .then((createdUserDocument) => this.transformToUser(createdUserDocument));
   }
 

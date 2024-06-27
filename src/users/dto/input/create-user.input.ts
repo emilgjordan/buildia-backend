@@ -25,5 +25,5 @@ export class CreateUserInput {
   @Field()
   @IsString()
   @MinLength(8)
-  hashedPassword: string;
+  password: string;
 }
