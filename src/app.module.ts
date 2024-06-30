@@ -10,7 +10,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AuthModule } from './auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './core/all-exceptions.filter';
-import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { ProjectsModule } from './projects/projects.module';
     UsersModule,
     DatabaseModule,
     AuthModule,
-    ProjectsModule,
   ],
   controllers: [AppController],
   providers: [
