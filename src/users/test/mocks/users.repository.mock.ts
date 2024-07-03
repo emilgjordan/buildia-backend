@@ -1,13 +1,13 @@
-import { userStub } from '../stubs/user.stubs';
+import { userDocumentStub } from '../stubs/user.stubs';
 
 export class UsersRepositoryMock {
-  findOne = jest.fn().mockResolvedValue(userStub());
+  findOne = jest.fn().mockResolvedValue(userDocumentStub());
 
-  findMany = jest.fn().mockResolvedValue([userStub()]);
+  findMany = jest.fn().mockResolvedValue([userDocumentStub()]);
 
-  create = jest.fn().mockResolvedValue(userStub());
+  create = jest.fn().mockResolvedValue(userDocumentStub());
 
-  updateOne = jest.fn().mockResolvedValue(userStub());
+  updateOne = jest.fn().mockResolvedValue(userDocumentStub());
 
   deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
 }

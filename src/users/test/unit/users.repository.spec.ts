@@ -1,10 +1,10 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
-import { UsersRepository } from '../../../repositories/users.repository';
-import { User, UserDocument } from '../../schemas/user.schema';
+import { UsersRepository } from '../../repositories/users.repository';
+import { UserDocument } from '../../schemas/user.schema';
 import { UserModelMock } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
-import { userStub } from '../stubs/user.stubs';
+import { createUserDtoStub, userStub } from '../stubs/user.stubs';
 
 describe('UsersRepository', () => {
   let usersRepository: UsersRepository;
@@ -16,22 +16,22 @@ describe('UsersRepository', () => {
       providers: [
         UsersRepository,
         {
-          provide: getModelToken(User.name),
+          provide: getModelToken('User'),
           useValue: UserModelMock,
         },
       ],
     }).compile();
 
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
-    userModel = moduleRef.get(getModelToken(User.name));
-    userFilterQuery = { _id: userStub()._id };
+    userModel = moduleRef.get(getModelToken('User'));
+    userFilterQuery = { _id: userStub().userId };
 
     jest.clearAllMocks();
   });
 
   describe('findOne', () => {
     describe('when findOne is called', () => {
-      let user: User;
+      let user: UserDocument;
       beforeEach(async () => {
         user = await usersRepository.findOne(userFilterQuery);
       });
@@ -48,7 +48,7 @@ describe('UsersRepository', () => {
 
   describe('findMany', () => {
     describe('when findMany is called', () => {
-      let users: User[];
+      let users: UserDocument[];
 
       beforeEach(async () => {
         users = await usersRepository.findMany(userFilterQuery);
@@ -66,7 +66,7 @@ describe('UsersRepository', () => {
 
   describe('create', () => {
     describe('when create is called', () => {
-      let user: User;
+      let user: UserDocument;
       let saveSpy: jest.SpyInstance;
       let constructorSpy: jest.SpyInstance;
 
@@ -74,12 +74,12 @@ describe('UsersRepository', () => {
         saveSpy = jest.spyOn(userModel.prototype, 'save');
         constructorSpy = jest.spyOn(userModel.prototype, 'constructorSpy');
 
-        user = await usersRepository.create(userStub());
+        user = await usersRepository.create(createUserDtoStub());
       });
 
       test('then it should call the userModel', () => {
         expect(saveSpy).toHaveBeenCalled();
-        expect(constructorSpy).toHaveBeenCalledWith(userStub());
+        expect(constructorSpy).toHaveBeenCalledWith(createUserDtoStub());
       });
 
       test('then it should return a user', () => {
@@ -90,7 +90,7 @@ describe('UsersRepository', () => {
 
   describe('updateOne', () => {
     describe('when updateOne is called', () => {
-      let user: User;
+      let user: UserDocument;
 
       beforeEach(async () => {
         user = await usersRepository.updateOne(userFilterQuery, userStub());

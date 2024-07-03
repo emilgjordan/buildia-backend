@@ -1,11 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { UsersServiceMock } from '../mocks/users.service.mock';
 import { UsersService } from '../../services/users.service';
-import { User } from '../../schemas/user.schema';
-import { userStub } from '../stubs/user.stubs';
+import { User } from '../../interfaces/user.interface';
+import { createUserDtoStub, userStub } from '../stubs/user.stubs';
 import { UsersController } from '../../controllers/users.controller';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
 
-describe('UsersService', () => {
+describe('UsersController', () => {
   let usersService: UsersServiceMock;
   let usersController: UsersController;
   beforeEach(async () => {
@@ -27,14 +28,14 @@ describe('UsersService', () => {
 
   describe('getUser', () => {
     describe('when getUser is called', () => {
-      let user: User;
+      let user: UserResponseDto;
       beforeEach(async () => {
-        user = await usersController.getUser(userStub()._id.toString());
+        user = await usersController.getUser(userStub().userId.toString());
       });
 
       test('then it should call usersService.getUserById', () => {
         expect(usersService.getUserById).toHaveBeenCalledWith(
-          userStub()._id.toString(),
+          userStub().userId.toString(),
         );
       });
 
@@ -46,7 +47,7 @@ describe('UsersService', () => {
 
   describe('getUsers', () => {
     describe('when getUsers is called', () => {
-      let users: User[];
+      let users: UserResponseDto[];
       beforeEach(async () => {
         users = await usersController.getUsers({});
       });
@@ -63,14 +64,16 @@ describe('UsersService', () => {
 
   describe('createUser', () => {
     test('should return a new user for successful creation ', async () => {
-      expect(await usersController.createUser(userStub())).toEqual(userStub());
+      expect(await usersController.createUser(createUserDtoStub())).toEqual(
+        userStub(),
+      );
     });
     test('should return an error response when creation fails', () => {
       const errorMessage = 'User already exists';
       usersService.createUser = jest
         .fn()
         .mockRejectedValue(new Error(errorMessage));
-      expect(usersController.createUser(userStub())).rejects.toThrow(
+      expect(usersController.createUser(createUserDtoStub())).rejects.toThrow(
         errorMessage,
       );
     });
@@ -83,13 +86,15 @@ describe('UsersService', () => {
       usersService.updateUser = jest.fn().mockResolvedValue(updatedUser);
       expect(
         await usersController.updateUser(
-          userStub()._id.toString(),
+          userStub().userId.toString(),
           updateUserDto,
+          userStub(),
         ),
       ).toEqual(updatedUser);
       expect(usersService.updateUser).toHaveBeenCalledWith(
-        userStub()._id.toString(),
+        userStub().userId.toString(),
         updateUserDto,
+        userStub(),
       );
     });
     it('should handle errors when updating a user fails', async () => {
@@ -98,7 +103,7 @@ describe('UsersService', () => {
 
       // Assuming your controller is set up to catch errors and format them appropriately
       await expect(
-        usersController.updateUser('invalidUserId', updateUserDto),
+        usersController.updateUser('invalidUserId', updateUserDto, userStub()),
       ).rejects.toThrow(errorMessage);
 
       expect(usersService.updateUser).toHaveBeenCalledWith(

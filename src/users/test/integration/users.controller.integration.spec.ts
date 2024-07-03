@@ -4,7 +4,7 @@ import { DatabaseService } from '../../../database/database.service';
 import { userStub } from '../stubs/user.stubs';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
-import { CreateUserDto } from '../../dto/input/create-user.input';
+import { CreateUserDto } from '../../../users/dto/create-user.dto';
 import { INestApplication } from '@nestjs/common';
 
 describe('User Controller (e2e)', () => {
@@ -40,7 +40,6 @@ describe('User Controller (e2e)', () => {
       const userStubInstance = userStub();
       const expectedUser = {
         ...userStubInstance,
-        _id: userStubInstance._id.toString(),
         createdAt: userStubInstance.createdAt.toISOString(),
         updatedAt: userStubInstance.updatedAt.toISOString(),
       };
@@ -56,7 +55,7 @@ describe('User Controller (e2e)', () => {
         firstName: userStub().firstName,
         lastName: userStub().lastName,
         email: userStub().email,
-        hashedPassword: userStub().hashedPassword,
+        password: userStub().hashedPassword,
         username: userStub().username,
       };
       const response = await request(httpServer)

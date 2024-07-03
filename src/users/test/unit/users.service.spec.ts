@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { UsersRepositoryMock } from '../mocks/users.repository.mock';
-import { UsersRepository } from '../../../repositories/users.repository';
+import { UsersRepository } from '../../repositories/users.repository';
 import { UsersService } from '../../services/users.service';
-import { User } from '../../schemas/user.schema';
-import { userStub } from '../stubs/user.stubs';
+import { User } from '../../interfaces/user.interface';
+import { createUserDtoStub, userStub } from '../stubs/user.stubs';
 
 describe('UsersService', () => {
   let usersRepository: UsersRepositoryMock;
@@ -29,12 +29,12 @@ describe('UsersService', () => {
     describe('when getUserById is called', () => {
       let user: User;
       beforeEach(async () => {
-        user = await usersService.getUserById(userStub()._id.toString());
+        user = await usersService.getUserById(userStub().userId.toString());
       });
 
       test('then it should call the usersRepository', () => {
         expect(usersRepository.findOne).toHaveBeenCalledWith({
-          _id: userStub()._id.toString(),
+          _id: userStub().userId.toString(),
         });
       });
 
@@ -85,7 +85,7 @@ describe('UsersService', () => {
       let user: User;
       beforeEach(async () => {
         usersRepository.findOne = jest.fn().mockResolvedValue(null);
-        user = await usersService.createUser(userStub());
+        user = await usersService.createUser(createUserDtoStub());
       });
 
       test('then it should call usersRepository.findOne', () => {
@@ -93,7 +93,9 @@ describe('UsersService', () => {
       });
 
       test('then it should call usersRepository.create', () => {
-        expect(usersRepository.create).toHaveBeenCalledWith(userStub());
+        expect(usersRepository.create).toHaveBeenCalledWith(
+          createUserDtoStub(),
+        );
       });
 
       test('then it should return a user', () => {
@@ -106,9 +108,9 @@ describe('UsersService', () => {
       });
 
       test('then it should not call usersRepository.create', async () => {
-        await expect(usersService.createUser(userStub())).rejects.toThrow(
-          'Username or email already exists',
-        );
+        await expect(
+          usersService.createUser(createUserDtoStub()),
+        ).rejects.toThrow('Username or email already exists');
         expect(usersRepository.create).not.toHaveBeenCalled();
       });
     });
@@ -119,14 +121,15 @@ describe('UsersService', () => {
       let user: User;
       beforeEach(async () => {
         user = await usersService.updateUser(
-          userStub()._id.toString(),
+          userStub().userId.toString(),
+          userStub().userId.toString(),
           userStub(),
         );
       });
 
       test('then it should call the usersRepository', () => {
         expect(usersRepository.updateOne).toHaveBeenCalledWith(
-          { _id: userStub()._id.toString() },
+          { _id: userStub().userId.toString() },
           userStub(),
         );
       });
@@ -142,7 +145,11 @@ describe('UsersService', () => {
 
       test('then it should not call usersRepository.updateOne', async () => {
         await expect(
-          usersService.updateUser(userStub()._id.toString(), userStub()),
+          usersService.updateUser(
+            userStub().userId.toString(),
+            userStub().userId.toString(),
+            userStub(),
+          ),
         ).rejects.toThrow('User does not exist');
         expect(usersRepository.updateOne).not.toHaveBeenCalled();
       });

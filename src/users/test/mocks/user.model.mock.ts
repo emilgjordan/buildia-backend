@@ -1,5 +1,10 @@
 import { mockModelFactory } from '../../../database/test/support/mock.model';
-import { userStub } from '../stubs/user.stubs';
-import { User } from '../../schemas/user.schema';
+import {
+  createUserDtoStub,
+  createUserRepositoryDataStub,
+} from '../stubs/user.stubs';
+import { UserSchemaDefinition } from '../../schemas/user.schema';
 
-export const UserModelMock = mockModelFactory<User>(userStub());
+export const UserModelMock = mockModelFactory<UserSchemaDefinition>(
+  createUserRepositoryDataStub(),
+);

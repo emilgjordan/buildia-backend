@@ -10,9 +10,9 @@ import { Response, Request } from 'express';
 import * as fs from 'fs';
 
 import {
-  CustomHttpExceptionResponse,
   HttpExceptionResponse,
-} from './models/http-exception-response.interface';
+  CustomHttpExceptionResponse,
+} from './http-exceptions-response.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -23,18 +23,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     let status: HttpStatus;
     let errorMessage: string;
+    let errorResponse: any;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const errorResponse = exception.getResponse();
-      errorMessage =
-        (errorResponse as HttpExceptionResponse).error || exception.message;
+      errorResponse = exception.getResponse();
+
+      if (typeof errorResponse === 'string') {
+        errorMessage = errorResponse;
+      } else if (typeof errorResponse === 'object' && errorResponse !== null) {
+        errorMessage =
+          (errorResponse as HttpExceptionResponse).message || exception.message;
+      } else {
+        errorMessage = exception.message;
+      }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      errorMessage = 'Critical internal server error occurred!';
+      errorMessage = 'Internal server error';
     }
 
-    const errorResponse = this.getErrorResponse(status, errorMessage, request);
+    errorResponse = this.getErrorResponse(status, errorMessage, request);
     const errorLog = this.getErrorLog(errorResponse, request, exception);
     this.writeErrorLogToFile(errorLog);
     response.status(status).json(errorResponse);
@@ -46,10 +54,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     request: Request,
   ): CustomHttpExceptionResponse => ({
     statusCode: status,
-    error: errorMessage,
+    message: errorMessage,
     path: request.url,
     method: request.method,
-    timeStamp: new Date(),
+    timeStamp: new Date().toDateString(),
   });
 
   private getErrorLog = (
@@ -57,12 +65,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     request: Request,
     exception: unknown,
   ): string => {
-    const { statusCode, error } = errorResponse;
+    const { statusCode, message } = errorResponse;
     const { method, url } = request;
     const errorLog = `Response Code: ${statusCode} - Method: ${method} - URL: ${url}\n\n
     ${JSON.stringify(errorResponse)}\n\n
     User: ${JSON.stringify(request.user ?? 'Not signed in')}\n\n
-    ${exception instanceof HttpException ? exception.stack : error}\n\n`;
+    ${exception instanceof HttpException ? exception.stack : message}\n\n`;
     return errorLog;
   };
 
