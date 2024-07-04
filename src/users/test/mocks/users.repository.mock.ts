@@ -1,4 +1,4 @@
-import { userDocumentStub } from '../stubs/user.stubs';
+import { userDocumentStub } from '../stubs/user-document.stub';
 
 export class UsersRepositoryMock {
   findOne = jest.fn().mockResolvedValue(userDocumentStub());

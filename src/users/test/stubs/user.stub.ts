@@ -1,8 +1,5 @@
-import { UserDocument, UserSchemaDefinition } from '../../schemas/user.schema';
-import { User } from '../../interfaces/user.interface';
-import { Types } from 'mongoose';
+import { User } from 'src/users/interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
-import { CreateUserDto } from '../../dto/input/create-user.dto';
 
 export const userStub = (): User => {
   return {
@@ -21,14 +18,5 @@ export const userStub = (): User => {
     createdAt: new Date(2006, 6, 23),
     updatedAt: new Date(2024, 2, 20),
     userId: '507f191e810c19729de860ea',
-  };
-};
-
-//deal with this
-export const createUserRepositoryDataStub = (): UserSchemaDefinition => {
-  const user = userStub();
-  const { userId, ...rest } = user;
-  return {
-    ...rest,
   };
 };
