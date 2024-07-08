@@ -1,5 +1,5 @@
 import { UserDocument } from '../../schemas/user.schema';
-import { userStub } from './user.stubs';
+import { userStub } from './user.stub';
 import { Types } from 'mongoose';
 
 export const userDocumentStub = (): Partial<UserDocument> => {

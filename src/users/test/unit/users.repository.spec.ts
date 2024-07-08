@@ -4,7 +4,7 @@ import { UsersRepository } from '../../repositories/users.repository';
 import { UserDocument } from '../../schemas/user.schema';
 import { UserModelMock } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
-import { userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stub';
 import { createUserStub } from '../stubs/create-user.stub';
 
 describe('UsersRepository', () => {
@@ -75,12 +75,12 @@ describe('UsersRepository', () => {
         saveSpy = jest.spyOn(userModel.prototype, 'save');
         constructorSpy = jest.spyOn(userModel.prototype, 'constructorSpy');
 
-        user = await usersRepository.create(createUserDtoStub());
+        user = await usersRepository.create(createUserStub());
       });
 
       test('then it should call the userModel', () => {
         expect(saveSpy).toHaveBeenCalled();
-        expect(constructorSpy).toHaveBeenCalledWith(createUserDtoStub());
+        expect(constructorSpy).toHaveBeenCalledWith(createUserStub());
       });
 
       test('then it should return a user', () => {

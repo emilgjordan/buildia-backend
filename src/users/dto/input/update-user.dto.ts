@@ -12,10 +12,6 @@ export class UpdateUserDto {
   @IsOptional()
   readonly username?: string;
 
-  @IsEmail()
-  @IsOptional()
-  readonly email?: string;
-
   @IsString()
   @IsNotEmpty()
   @IsOptional()
@@ -27,7 +23,14 @@ export class UpdateUserDto {
   readonly lastName?: string;
 
   @IsString()
-  @MinLength(8)
   @IsOptional()
-  readonly password?: string;
+  readonly bio?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly portfolioUrl?: string;
+
+  @IsString({ each: true })
+  @IsOptional()
+  readonly skills?: string[];
 }
