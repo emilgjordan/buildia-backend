@@ -8,9 +8,11 @@ import { userStub } from './user.stub';
 //deal with this
 export const createUserRepositoryDataStub = (): UserSchemaDefinition => {
   const user = userStub();
-  const { userId, ideas, ...rest } = user;
+  const { userId, projects, ...rest } = user;
   return {
-    ideas: ideas.map((ideaId) => Types.ObjectId.createFromHexString(ideaId)),
+    projects: projects.map((projectId) =>
+      Types.ObjectId.createFromHexString(projectId),
+    ),
     ...rest,
   };
 };

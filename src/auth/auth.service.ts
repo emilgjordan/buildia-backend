@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async validate(email: string, password: string): Promise<User | null> {
-    const user = await this.usersService.getUserByEmail(email);
+    const user = await this.usersService.getUserByEmail(email, false);
 
     if (!user) {
       return null;
@@ -39,7 +39,7 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
     });
 
-    const user = await this.usersService.getUserByEmail(decoded.email);
+    const user = await this.usersService.getUserByEmail(decoded.email, false);
 
     if (!user) {
       throw new Error('Unable to get the user from decoded token.');

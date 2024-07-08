@@ -1,64 +1,72 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
 import { UsersRepository } from '../repositories/users.repository';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { UserDocument } from '../schemas/user.schema';
 import { User } from '../interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dto/input/create-user.dto';
+import { UserResponseDto } from '../dto/output/user-response.dto';
+import { ProjectsService } from '../../projects/services/projects.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: UsersRepository) {}
+  constructor(
+    private userRepository: UsersRepository,
+    @Inject(forwardRef(() => ProjectsService))
+    private projectsService: ProjectsService,
+  ) {}
 
-  private transformToUser(userDocument: UserDocument): User {
-    const { _id, __v, ...user } = userDocument.toObject();
-    return { ...user, userId: _id.toString() };
-  }
-
-  async getUserById(userId: string): Promise<User> {
+  async getUserById(userId: string, populate: boolean): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       _id: userId,
     });
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.transformToUser(userDocument);
+    return this.toUser(userDocument);
   }
 
-  async getUserByUsername(username: string): Promise<User> {
+  async getUserByUsername(username: string, populate: boolean): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       username: username,
     });
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.transformToUser(userDocument);
+    return this.toUser(userDocument);
   }
 
-  async getUserByEmail(email: string): Promise<User> {
+  async getUserByEmail(email: string, populate: boolean): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       email: email,
     });
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.transformToUser(userDocument);
+    return this.toUser(userDocument);
   }
 
-  async getUsers(userFilterQuery: FilterQuery<User>): Promise<User[]> {
+  async getUsers(
+    userFilterQuery: FilterQuery<User>,
+    populate: boolean,
+  ): Promise<User[]> {
     const userDocuments: UserDocument[] =
       await this.userRepository.findMany(userFilterQuery);
-    return userDocuments.map((userDocument) =>
-      this.transformToUser(userDocument),
-    );
+    return userDocuments.map((userDocument) => this.toUser(userDocument));
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(
+    createUserDto: CreateUserDto,
+    populate: boolean,
+  ): Promise<User> {
     const { username, email } = createUserDto;
     const userExists = await this.userRepository.findOne({
       $or: [{ username: username }, { email: email }],
@@ -81,13 +89,14 @@ export class UsersService {
 
     const createdUserDocument: UserDocument =
       await this.userRepository.create(newUser);
-    return this.transformToUser(createdUserDocument);
+    return this.toUser(createdUserDocument);
   }
 
   async updateUser(
-    currentUserId: string,
     targetUserId: string,
     updateUserDto: Partial<User>,
+    populate: boolean,
+    currentUserId: string,
   ): Promise<User> {
     const userExists = await this.userRepository.findOne({ _id: targetUserId });
     if (!userExists) {
@@ -100,7 +109,7 @@ export class UsersService {
     }
     const updatedUserDocument: UserDocument =
       await this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
-    return this.transformToUser(updatedUserDocument);
+    return this.toUser(updatedUserDocument);
   }
 
   async removeUser(
@@ -118,6 +127,41 @@ export class UsersService {
     }
     return {
       message: `User with ID '${targetUserId}' was deleted successfully.`,
+    };
+  }
+
+  toUserResponseDto(user: User): UserResponseDto {
+    //exclude sensitive data from response
+    const { hashedPassword, ...userResponseDto } = user;
+    return userResponseDto;
+  }
+
+  toUser(userDocument: UserDocument): User {
+    const { _id, projects, __v, ...user } = userDocument.toObject();
+    let projectsNew;
+
+    if (userDocument.projects.length === 0) {
+      projectsNew = [];
+    } else if (
+      userDocument.projects.every(
+        (project) => project instanceof Types.ObjectId,
+      )
+    ) {
+      projectsNew = userDocument.projects.map((project) => project.toString());
+    } else if (
+      userDocument.projects.every((project) => typeof project === 'object')
+    ) {
+      projectsNew = userDocument.projects.map((project) =>
+        this.projectsService.toProject(project),
+      );
+    } else {
+      throw new InternalServerErrorException('Invalid user projects data');
+    }
+
+    return {
+      ...user,
+      userId: _id.toString(),
+      projects: projectsNew,
     };
   }
 }

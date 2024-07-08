@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, HydratedDocument, Types } from 'mongoose';
-import { IdeaDocument } from 'src/ideas/schemas/idea.schema';
+import { ProjectDocument } from 'src/projects/schemas/project.schema';
 
 export type UserDocument = UserSchemaDefinition & Document;
 
@@ -39,8 +39,8 @@ export class UserSchemaDefinition {
   @Prop()
   skills: string[];
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Idea' }] })
-  ideas: IdeaDocument[] | Types.ObjectId[];
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }] })
+  projects: ProjectDocument[] | Types.ObjectId[];
 
   @Prop({ default: false })
   isEmailVerified: boolean;

@@ -10,7 +10,7 @@ export const updateUserStub = (): Partial<User> => {
     bio: 'Got a head of fiery hair, and a turbo-charged backpack',
     portfolioUrl: 'https://www.johnnytest.com',
     skills: ['mischief', 'saving-the-world'],
-    ideas: [],
+    projects: [],
     isEmailVerified: false,
     isPremium: false,
     role: 'user',

@@ -2,10 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
 import { UserDocument } from '../../users/schemas/user.schema';
 
-export type IdeaDocument = IdeaSchemaDefinition & Document;
+export type ProjectDocument = ProjectSchemaDefinition & Document;
 
 @Schema()
-export class IdeaSchemaDefinition {
+export class ProjectSchemaDefinition {
   @Prop({ required: true })
   title: string;
 
@@ -30,4 +30,6 @@ export class IdeaSchemaDefinition {
   @Prop({ default: () => Date.now(), index: true })
   updatedAt: Date;
 }
-export const IdeaSchema = SchemaFactory.createForClass(IdeaSchemaDefinition);
+export const ProjectSchema = SchemaFactory.createForClass(
+  ProjectSchemaDefinition,
+);

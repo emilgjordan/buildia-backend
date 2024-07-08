@@ -1,4 +1,4 @@
-import { IdeaDocument } from 'src/ideas/schemas/idea.schema';
+import { Project } from '../../projects/interfaces/project.interface';
 
 export interface User {
   userId: string;
@@ -10,7 +10,7 @@ export interface User {
   bio: string;
   portfolioUrl: string;
   skills: string[];
-  ideas: string[] | IdeaDocument[];
+  projects: string[] | Project[];
   isEmailVerified: boolean;
   isPremium: boolean;
   role: string;

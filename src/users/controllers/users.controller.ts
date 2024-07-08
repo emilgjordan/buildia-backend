@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/input/create-user.dto';
@@ -28,38 +29,49 @@ export class UsersController {
     private readonly authService: AuthService,
   ) {}
 
-  private toUserResponseDto(user: User): UserResponseDto {
-    //exclude sensitive data from response
-    const { hashedPassword, ...userResponseDto } = user;
-    return userResponseDto;
-  }
-
   @Get(':userId')
-  async getUser(@Param('userId') userId: string): Promise<UserResponseDto> {
+  async getUser(
+    @Param('userId') userId: string,
+    @Query('populate') populate: string,
+  ): Promise<UserResponseDto> {
     if (!Types.ObjectId.isValid(userId)) {
       throw new BadRequestException('Invalid user ID');
     }
-    const user: User = await this.usersService.getUserById(userId);
-    return this.toUserResponseDto(user);
+    const shouldPopulate = populate === 'true';
+    const user: User = await this.usersService.getUserById(
+      userId,
+      shouldPopulate,
+    );
+    return this.usersService.toUserResponseDto(user);
   }
 
   @Get()
   async getUsers(
     @Body() userFilterQuery: GetUsersFilterDto,
+    @Query('populate') populate: string,
   ): Promise<UserResponseDto[]> {
-    const users: User[] = await this.usersService.getUsers(userFilterQuery);
-    return users.map((user) => this.toUserResponseDto(user));
+    const shouldPopulate = populate === 'true';
+    const users: User[] = await this.usersService.getUsers(
+      userFilterQuery,
+      shouldPopulate,
+    );
+    return users.map((user) => this.usersService.toUserResponseDto(user));
   }
 
   @Post()
   async createUser(
     @Body() createUserDto: CreateUserDto,
+    @Query('populate') populate: string,
   ): Promise<CreateUserResponseDto> {
-    const user: User = await this.usersService.createUser(createUserDto);
+    const shouldPopulate = populate === 'true';
+    const user: User = await this.usersService.createUser(
+      createUserDto,
+      shouldPopulate,
+    );
     const loginResponse = await this.authService.login(user);
 
     return {
-      user: this.toUserResponseDto(user),
+      user: this.usersService.toUserResponseDto(user),
       accessToken: loginResponse.access_token,
     };
   }
@@ -67,18 +79,21 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async updateUser(
     @Param('userId') targetUserId: string,
+    @Query('populate') populate: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<UserResponseDto> {
     if (!Types.ObjectId.isValid(targetUserId)) {
       throw new BadRequestException('Invalid user ID');
     }
+    const shouldPopulate = populate === 'true';
     const updatedUser: User = await this.usersService.updateUser(
-      currentUser.userId,
       targetUserId,
       updateUserDto,
+      shouldPopulate,
+      currentUser.userId,
     );
-    return this.toUserResponseDto(updatedUser);
+    return this.usersService.toUserResponseDto(updatedUser);
   }
   @Delete(':userId')
   @UseGuards(JwtAuthGuard)
