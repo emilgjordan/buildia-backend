@@ -4,7 +4,8 @@ import { UsersRepository } from '../../repositories/users.repository';
 import { UserDocument } from '../../schemas/user.schema';
 import { UserModelMock } from '../mocks/user.model.mock';
 import { FilterQuery } from 'mongoose';
-import { createUserDtoStub, userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stubs';
+import { createUserStub } from '../stubs/create-user.stub';
 
 describe('UsersRepository', () => {
   let usersRepository: UsersRepository;

@@ -9,7 +9,7 @@ import { FilterQuery } from 'mongoose';
 import { UserDocument } from '../schemas/user.schema';
 import { User } from '../interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/input/create-user.dto';
 
 @Injectable()
 export class UsersService {

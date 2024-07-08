@@ -10,15 +10,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto/input/create-user.dto';
 import { User } from '../interfaces/user.interface';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { CurrentUser } from 'src/auth/current-user.decorator';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
-import { GetUsersFilterDto } from '../dto/get-users-filter.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/current-user.decorator';
+import { UpdateUserDto } from '../dto/input/update-user.dto';
+import { UserResponseDto } from '../dto/output/user-response.dto';
+import { GetUsersFilterDto } from '../dto/input/get-users-filter.dto';
 import { AuthService } from '../../auth/auth.service';
-import { CreateUserResponseDto } from '../dto/create-user-response.dto';
+import { CreateUserResponseDto } from '../dto/output/create-user-response.dto';
 import { Types } from 'mongoose';
 @Controller('users')
 export class UsersController {
