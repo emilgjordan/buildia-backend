@@ -9,7 +9,7 @@ export const userResponseStub = (): UserResponseDto => {
     bio: 'Got a head of fiery hair, and a turbo-charged backpack',
     portfolioUrl: 'https://www.johnnytest.com',
     skills: ['mischief', 'saving-the-world'],
-    projects: ['experiment', 'battle'],
+    ideas: [],
     isEmailVerified: false,
     isPremium: false,
     role: 'user',

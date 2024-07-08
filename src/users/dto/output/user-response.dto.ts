@@ -7,7 +7,7 @@ export class UserResponseDto {
   bio: string;
   portfolioUrl: string;
   skills: string[];
-  projects: string[];
+  ideas: string[];
   isEmailVerified: boolean;
   isPremium: boolean;
   role: string;

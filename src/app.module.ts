@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { IdeasModule } from './ideas/ideas.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
     UsersModule,
     DatabaseModule,
     AuthModule,
+    IdeasModule,
   ],
   controllers: [AppController],
   providers: [

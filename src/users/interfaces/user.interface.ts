@@ -1,3 +1,5 @@
+import { IdeaDocument } from 'src/ideas/schemas/idea.schema';
+
 export interface User {
   userId: string;
   firstName: string;
@@ -8,7 +10,7 @@ export interface User {
   bio: string;
   portfolioUrl: string;
   skills: string[];
-  projects: string[];
+  ideas: string[] | IdeaDocument[];
   isEmailVerified: boolean;
   isPremium: boolean;
   role: string;
