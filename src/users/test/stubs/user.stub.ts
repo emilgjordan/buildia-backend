@@ -3,20 +3,20 @@ import * as bcrypt from 'bcryptjs';
 
 export const userStub = (): User => {
   return {
-    firstName: 'Emil',
-    lastName: 'Jordan',
-    email: 'emiljordan@example.com',
-    username: 'emiljordan',
+    firstName: 'Johnny',
+    lastName: 'Test',
+    email: 'johnnytest@example.com',
+    username: 'johnnytest',
     hashedPassword: bcrypt.hash('password123', 10),
-    bio: 'This is a test bio',
-    portfolioUrl: 'https://www.emiljordan.com',
-    skills: ['javascript', 'typescript', 'nodejs', 'nestjs'],
-    projects: ['project1', 'project2'],
+    bio: 'Got a head of fiery hair, and a turbo-charged backpack',
+    portfolioUrl: 'https://www.johnnytest.com',
+    skills: ['mischief', 'saving-the-world'],
+    projects: ['experiment', 'battle'],
     isEmailVerified: false,
     isPremium: false,
     role: 'user',
-    createdAt: new Date(2006, 6, 23),
-    updatedAt: new Date(2024, 2, 20),
+    createdAt: new Date(2005, 9, 17),
+    updatedAt: new Date(2014, 12, 25),
     userId: '507f191e810c19729de860ea',
   };
 };

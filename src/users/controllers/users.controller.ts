@@ -20,6 +20,7 @@ import { GetUsersFilterDto } from '../dto/input/get-users-filter.dto';
 import { AuthService } from '../../auth/auth.service';
 import { CreateUserResponseDto } from '../dto/output/create-user-response.dto';
 import { Types } from 'mongoose';
+import { IsMongoId } from 'class-validator';
 @Controller('users')
 export class UsersController {
   constructor(

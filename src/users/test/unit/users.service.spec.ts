@@ -3,12 +3,20 @@ import { UsersRepositoryMock } from '../mocks/users.repository.mock';
 import { UsersRepository } from '../../repositories/users.repository';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../interfaces/user.interface';
-import { userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stub';
 import { createUserStub } from '../stubs/create-user.stub';
+import {
+  ConflictException,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Types } from 'mongoose';
 
 describe('UsersService', () => {
-  let usersRepository: UsersRepositoryMock;
   let usersService: UsersService;
+  let usersRepository: UsersRepositoryMock;
+
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -26,132 +34,197 @@ describe('UsersService', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('getUserById', () => {
-    describe('when getUserById is called', () => {
-      let user: User;
-      beforeEach(async () => {
-        user = await usersService.getUserById(userStub().userId.toString());
-      });
+    let user: User;
 
-      test('then it should call the usersRepository', () => {
-        expect(usersRepository.findOne).toHaveBeenCalledWith({
-          _id: userStub().userId.toString(),
-        });
-      });
+    test('should throw NotFoundException if user does not exist', async () => {
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(null);
+      await expect(usersService.getUserById(userStub().userId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
 
-      test('then it should return a user', () => {
-        expect(user).toEqual(userStub());
+    test('should call usersRepository.findOne', async () => {
+      user = await usersService.getUserById(userStub().userId);
+      expect(usersRepository.findOne).toHaveBeenCalledWith({
+        _id: userStub().userId,
       });
+    });
+
+    test('should return a user for a valid user ID', () => {
+      expect(user).toEqual(userStub());
+    });
+
+    test('should propagate other exceptions from the repository', async () => {
+      jest
+        .spyOn(usersRepository, 'findMany')
+        .mockRejectedValue(new InternalServerErrorException());
+      await expect(usersService.getUserById(userStub().userId)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
   describe('getUserByUsername', () => {
-    describe('when getUserByUsername is called', () => {
-      let user: User;
-      beforeEach(async () => {
-        user = await usersService.getUserByUsername(userStub().username);
-      });
+    let user: User;
 
-      test('then it should call the usersRepository', () => {
-        expect(usersRepository.findOne).toHaveBeenCalledWith({
-          username: userStub().username,
-        });
-      });
+    test('should throw NotFoundException if user does not exist', async () => {
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(null);
+      await expect(
+        usersService.getUserByUsername(userStub().username),
+      ).rejects.toThrow(NotFoundException);
+    });
 
-      test('then it should return a user', () => {
-        expect(user).toEqual(userStub());
+    test('should call usersRepository.findOne', async () => {
+      user = await usersService.getUserById(userStub().username);
+      expect(usersRepository.findOne).toHaveBeenCalledWith({
+        username: userStub().username,
       });
+    });
+
+    test('should return a user for a valid username', () => {
+      expect(user).toEqual(userStub());
+    });
+
+    test('should propagate other exceptions from the repository', async () => {
+      jest
+        .spyOn(usersRepository, 'findMany')
+        .mockRejectedValue(new InternalServerErrorException());
+      await expect(
+        usersService.getUserById(userStub().username),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('getUserByEmail', () => {
+    let user: User;
+
+    test('should throw NotFoundException if user does not exist', async () => {
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(null);
+      await expect(
+        usersService.getUserByUsername(userStub().email),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    test('should call usersRepository.findOne', async () => {
+      user = await usersService.getUserByUsername(userStub().email);
+      expect(usersRepository.findOne).toHaveBeenCalledWith({
+        email: userStub().email,
+      });
+    });
+
+    test('should return a user for a valid email', () => {
+      expect(user).toEqual(userStub());
+    });
+
+    test('should propagate other exceptions from the repository', async () => {
+      jest
+        .spyOn(usersRepository, 'findMany')
+        .mockRejectedValue(new InternalServerErrorException());
+      await expect(
+        usersService.getUserByEmail(userStub().email),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 
   describe('getUsers', () => {
-    describe('when getUsers is called', () => {
-      let users: User[];
-      beforeEach(async () => {
-        users = await usersService.getUsers({});
-      });
+    let users: User[];
 
-      test('then it should call the usersRepository', () => {
-        expect(usersRepository.findMany).toHaveBeenCalled();
-      });
+    test('should call usersRepository.findMany', async () => {
+      users = await usersService.getUsers({});
+      expect(usersRepository.findMany).toHaveBeenCalledWith({});
+    });
 
-      test('then it should return a list of users', () => {
-        expect(users).toEqual([userStub()]);
-      });
+    test('should return a list of users', () => {
+      expect(users).toEqual([userStub()]);
+    });
+
+    test('should propagate other exceptions from the repository', async () => {
+      jest
+        .spyOn(usersRepository, 'findMany')
+        .mockRejectedValue(new InternalServerErrorException());
+      await expect(usersService.getUsers({})).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
   describe('createUser', () => {
-    describe('when createUser is called with new user data', () => {
-      let user: User;
-      beforeEach(async () => {
-        usersRepository.findOne = jest.fn().mockResolvedValue(null);
-        user = await usersService.createUser(createUserStub());
-      });
+    let user: User;
 
-      test('then it should call usersRepository.findOne', () => {
-        expect(usersRepository.findOne).toHaveBeenCalled();
-      });
-
-      test('then it should call usersRepository.create', () => {
-        expect(usersRepository.create).toHaveBeenCalledWith(createUserStub());
-      });
-
-      test('then it should return a user', () => {
-        expect(user).toEqual(userStub());
-      });
+    test('should throw ConflictException if username or email already exists', async () => {
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(userStub());
+      await expect(usersService.createUser(createUserStub())).rejects.toThrow(
+        ConflictException,
+      );
     });
-    describe('when createUser is called with existing user data', () => {
-      beforeEach(async () => {
-        usersRepository.findOne = jest.fn().mockResolvedValue(userStub());
-      });
 
-      test('then it should not call usersRepository.create', async () => {
-        await expect(usersService.createUser(createUserStub())).rejects.toThrow(
-          'Username or email already exists',
-        );
-        expect(usersRepository.create).not.toHaveBeenCalled();
-      });
+    test('should call usersRepository.findOne', () => {
+      expect(usersRepository.findOne).toHaveBeenCalled();
+    });
+
+    test('should call usersRepository.createOne', async () => {
+      user = await usersService.createUser(createUserStub());
+      expect(usersRepository.create).toHaveBeenCalledWith(createUserStub());
+    });
+
+    test('should return a user', () => {
+      expect(user).toEqual(userStub());
     });
   });
 
   describe('updateUser', () => {
-    describe('when updateUser is called with an existing user ID', () => {
-      let user: User;
-      beforeEach(async () => {
-        user = await usersService.updateUser(
+    let user: User;
+    const updateUserDto = { username: 'newUsername' };
+    const updatedUser = { ...userStub(), ...updateUserDto };
+
+    test('should throw NotFoundException if user does not exist', async () => {
+      jest.spyOn(usersRepository, 'updateOne').mockResolvedValue(null);
+      await expect(
+        usersService.updateUser(
           userStub().userId.toString(),
           userStub().userId.toString(),
           userStub(),
-        );
-      });
-
-      test('then it should call the usersRepository', () => {
-        expect(usersRepository.updateOne).toHaveBeenCalledWith(
-          { _id: userStub().userId.toString() },
-          userStub(),
-        );
-      });
-
-      test('then it should return a user', () => {
-        expect(user).toEqual(userStub());
-      });
+        ),
+      ).rejects.toThrow(NotFoundException);
     });
-    describe('when updateUser is called with a user ID that does not exist', () => {
-      beforeEach(async () => {
-        usersRepository.findOne = jest.fn().mockResolvedValue(null);
-      });
 
-      test('then it should not call usersRepository.updateOne', async () => {
-        await expect(
-          usersService.updateUser(
-            userStub().userId.toString(),
-            userStub().userId.toString(),
-            userStub(),
-          ),
-        ).rejects.toThrow('User does not exist');
-        expect(usersRepository.updateOne).not.toHaveBeenCalled();
-      });
+    test('should throw UnauthorizedException if user ID does not match current user ID', async () => {
+      const differentUserId = new Types.ObjectId().toHexString();
+      await expect(
+        usersService.updateUser(differentUserId, userStub().userId, userStub()),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    test('should call usersRepository.updateOne', async () => {
+      user = await usersService.updateUser(
+        userStub().userId,
+        userStub().userId,
+        updateUserDto,
+      );
+      expect(usersRepository.updateOne).toHaveBeenCalledWith(
+        { _id: userStub().userId },
+        updateUserDto,
+      );
+    });
+
+    test('should return the updated User', () => {
+      expect(user).toEqual(updatedUser);
+    });
+
+    test('then it should not call usersRepository.updateOne', async () => {
+      await expect(
+        usersService.updateUser(
+          userStub().userId.toString(),
+          userStub().userId.toString(),
+          userStub(),
+        ),
+      ).rejects.toThrow('User does not exist');
+      expect(usersRepository.updateOne).not.toHaveBeenCalled();
     });
   });
 });

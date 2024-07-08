@@ -1,7 +1,7 @@
 import { Connection } from 'mongoose';
 import { AppModule } from '../../../app.module';
 import { DatabaseService } from '../../../database/database.service';
-import { userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stub';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { CreateUserDto } from '../../dto/input/create-user.dto';

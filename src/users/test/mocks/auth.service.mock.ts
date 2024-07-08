@@ -1,4 +1,4 @@
-import { userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stub';
 
 export class AuthServiceMock {
   validate = jest.fn().mockResolvedValue(userStub());

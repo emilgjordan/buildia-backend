@@ -1,4 +1,4 @@
-import { userStub } from '../stubs/user.stubs';
+import { userStub } from '../stubs/user.stub';
 
 export class UsersServiceMock {
   getUserById = jest.fn().mockResolvedValue(userStub());

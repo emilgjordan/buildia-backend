@@ -2,8 +2,10 @@ import { CreateUserDto } from '../../dto/input/create-user.dto';
 
 export const createUserStub = (): CreateUserDto => {
   return {
-    username: 'testuser',
-    email: 'test@example.com',
+    firstName: 'Johnny',
+    lastName: 'Test',
+    email: 'johnnytest@example.com',
+    username: 'johnnytest',
     password: 'password123',
   };
 };
