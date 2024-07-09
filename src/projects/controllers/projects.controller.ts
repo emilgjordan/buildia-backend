@@ -14,7 +14,7 @@ import { Types } from 'mongoose';
 import { Project } from '../interfaces/project.interface';
 import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { CurrentUser } from 'src/auth/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from 'src/users/interfaces/user.interface';
 
 @Controller('projects')
