@@ -6,7 +6,7 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class ProjectsRepository extends EntityRepository<ProjectDocument> {
-  constructor(@InjectModel('project') projectModel: Model<ProjectDocument>) {
+  constructor(@InjectModel('Project') projectModel: Model<ProjectDocument>) {
     super(projectModel);
   }
 }

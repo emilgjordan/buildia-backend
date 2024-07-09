@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { Project } from '../interfaces/project.interface';
 import { ProjectResponseDto } from '../dto/output/project-response.dto';
-import { ProjectDocument } from '../schemas/project.schema';
+import {
+  ProjectDocument,
+  ProjectSchemaDefinition,
+} from '../schemas/project.schema';
 import { Types } from 'mongoose';
 import { UsersService } from '../../users/services/users.service';
 import { ProjectsRepository } from '../repositories/projects.repository';
@@ -18,8 +21,9 @@ import { UpdateProjectDto } from '../dto/input/update-project.dto';
 @Injectable()
 export class ProjectsService {
   constructor(
-    private projectsRepository: ProjectsRepository,
-    @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
+    private readonly projectsRepository: ProjectsRepository,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   async getProjectById(projectId: string, populate: boolean): Promise<Project> {
@@ -43,20 +47,35 @@ export class ProjectsService {
       await this.projectsRepository.findMany(projectFilterQuery);
     if (populate) {
       return await Promise.all(
-        projectDocuments.map(async (projectDocument) =>
-          this.toProject(await projectDocument.populate('owner', 'users')),
-        ),
+        projectDocuments.map(async (projectDocument) => {
+          const populatedProject =
+            await projectDocument.populate('owner users');
+          return this.toProject(populatedProject);
+        }),
+      );
+    } else {
+      return projectDocuments.map((projectDocument) =>
+        this.toProject(projectDocument),
       );
     }
-    return projectDocuments.map((projectDocument) =>
-      this.toProject(projectDocument),
-    );
   }
 
-  async createProject(createProjectDto: CreateProjectDto): Promise<Project> {
-    const projectDocument =
-      await this.projectsRepository.create(createProjectDto);
-    return this.toProject(projectDocument);
+  async createProject(
+    createProjectDto: CreateProjectDto,
+    populate: boolean,
+    currentUserId: string,
+  ): Promise<Project> {
+    const ownerId = new Types.ObjectId(currentUserId);
+    const newProject = {
+      ...createProjectDto,
+      owner: ownerId,
+      users: [ownerId],
+    };
+    const projectDocument = await this.projectsRepository.create(newProject);
+    this.usersService.addProjectToUser(currentUserId, projectDocument._id);
+    return populate
+      ? this.toProject(await projectDocument.populate('owner', 'users'))
+      : this.toProject(projectDocument);
   }
 
   async updateProject(

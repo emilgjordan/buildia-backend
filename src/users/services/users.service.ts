@@ -60,7 +60,13 @@ export class UsersService {
   ): Promise<User[]> {
     const userDocuments: UserDocument[] =
       await this.userRepository.findMany(userFilterQuery);
-    return userDocuments.map((userDocument) => this.toUser(userDocument));
+    return populate
+      ? Promise.all(
+          userDocuments.map(async (userDocument) =>
+            this.toUser(await userDocument.populate('projects')),
+          ),
+        )
+      : userDocuments.map((userDocument) => this.toUser(userDocument));
   }
 
   async createUser(
@@ -71,7 +77,6 @@ export class UsersService {
     const userExists = await this.userRepository.findOne({
       $or: [{ username: username }, { email: email }],
     });
-    console.log(userExists);
     if (userExists) {
       throw new ConflictException('Username or email already exists');
     }
@@ -89,7 +94,10 @@ export class UsersService {
 
     const createdUserDocument: UserDocument =
       await this.userRepository.create(newUser);
-    return this.toUser(createdUserDocument);
+
+    return populate
+      ? this.toUser(await createdUserDocument.populate('projects'))
+      : this.toUser(createdUserDocument);
   }
 
   async updateUser(
@@ -109,7 +117,10 @@ export class UsersService {
     }
     const updatedUserDocument: UserDocument =
       await this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
-    return this.toUser(updatedUserDocument);
+
+    return populate
+      ? this.toUser(await updatedUserDocument.populate('projects'))
+      : this.toUser(updatedUserDocument);
   }
 
   async removeUser(
@@ -128,6 +139,13 @@ export class UsersService {
     return {
       message: `User with ID '${targetUserId}' was deleted successfully.`,
     };
+  }
+
+  addProjectToUser(userId: string, projectId: string): Promise<UserDocument> {
+    return this.userRepository.updateOne(
+      { _id: userId },
+      { $push: { projects: projectId } },
+    );
   }
 
   toUserResponseDto(user: User): UserResponseDto {

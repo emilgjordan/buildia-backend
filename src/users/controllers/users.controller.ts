@@ -9,12 +9,14 @@ import {
   UseGuards,
   BadRequestException,
   Query,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/input/create-user.dto';
 import { User } from '../interfaces/user.interface';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../auth/current-user.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UpdateUserDto } from '../dto/input/update-user.dto';
 import { UserResponseDto } from '../dto/output/user-response.dto';
 import { GetUsersFilterDto } from '../dto/input/get-users-filter.dto';
@@ -26,6 +28,7 @@ import { IsMongoId } from 'class-validator';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
 
