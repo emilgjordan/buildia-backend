@@ -1,22 +1,14 @@
-import { config } from 'dotenv';
-
-const envPath =
-  process.env.NODE_ENV === 'production'
-    ? '.env.production'
-    : process.env.NODE_ENV === 'test'
-      ? '.env.test'
-      : '.env.development';
-
-config({ path: envPath });
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-
-const PORT = process.env.PORT || 3000;
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const configService = app.get(ConfigService);
+  const PORT = configService.get<number>('PORT');
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -27,12 +19,10 @@ async function bootstrap() {
       },
     }),
   );
-  if (!process.env.MONGO_CONNECTION_URI) {
-    console.error('MONGO_CONNECTION_URI must be defined');
-    process.exit(1); // Exit with a failure code
-  }
+
   await app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 }
+
 bootstrap();
