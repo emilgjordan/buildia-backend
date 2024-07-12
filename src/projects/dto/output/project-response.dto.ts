@@ -4,7 +4,7 @@ export class ProjectResponseDto {
   projectId: string;
   title: string;
   description: string;
-  owner: string | UserResponseDto;
+  creator: string | UserResponseDto;
   users: string[] | UserResponseDto[];
   createdAt: Date;
   updatedAt: Date;

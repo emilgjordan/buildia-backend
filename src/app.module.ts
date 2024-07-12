@@ -8,14 +8,15 @@ import { AuthModule } from './auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ProjectsModule } from './projects/projects.module';
-import Joi from 'joi';
+import * as Joi from 'joi';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
-
+import { ChatModule } from './chat/chat.module';
+import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `${process.env.NODE_ENV}.env`,
+      envFilePath: `.${process.env.NODE_ENV || 'development'}.env`,
       isGlobal: true,
       cache: true,
       load: [databaseConfig, jwtConfig],
@@ -32,6 +33,7 @@ import jwtConfig from './config/jwt.config';
     DatabaseModule,
     AuthModule,
     ProjectsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [
@@ -39,6 +41,10 @@ import jwtConfig from './config/jwt.config';
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: WsExceptionsFilter,
     },
   ],
 })

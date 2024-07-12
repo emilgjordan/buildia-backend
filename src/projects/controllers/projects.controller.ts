@@ -24,17 +24,48 @@ export class ProjectsController {
   @Get(':projectId')
   async getProjectById(
     @Param('projectId') projectId: string,
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
   ): Promise<ProjectResponseDto> {
     if (!Types.ObjectId.isValid(projectId)) {
       throw new BadRequestException('Invalid project ID');
     }
-    const shouldPopulate = populate === 'true';
     const project: Project = await this.projectsService.getProjectById(
       projectId,
-      shouldPopulate,
+      populate,
     );
     return this.projectsService.toProjectResponseDto(project);
+  }
+
+  @Post(':projectId/join-request')
+  @UseGuards(JwtAuthGuard)
+  async requestToJoinProject(
+    @Param('projectId') projectId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<{ message: string }> {
+    if (!Types.ObjectId.isValid(projectId)) {
+      throw new BadRequestException('Invalid project ID');
+    }
+    await this.projectsService.requestJoinProject(
+      projectId,
+      currentUser.userId,
+    );
+    return { message: 'Request sent' };
+  }
+
+  @Post(':projectId/approve-join-request')
+  @UseGuards(JwtAuthGuard)
+  async approveJoinRequest(
+    @Param('projectId') projectId: string,
+    @Body('userId') userId: string,
+    @CurrentUser() currentUser: User,
+  ) {
+    if (!Types.ObjectId.isValid(projectId)) {
+      throw new BadRequestException('Invalid project ID');
+    }
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+    await this.projectsService.approveJoinRequest(projectId, userId);
   }
 
   @Get()

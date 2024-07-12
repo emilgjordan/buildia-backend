@@ -15,7 +15,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  //might need to transform User class to GraphQL User type
   async validate(validationPayload: {
     email: string;
     sub: string;

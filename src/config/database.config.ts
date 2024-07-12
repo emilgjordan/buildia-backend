@@ -1,5 +1,5 @@
 export default () => ({
   database: {
-    uri: process.env.DATABASE_URI,
+    uri: process.env.MONGO_CONNECTION_URI,
   },
 });

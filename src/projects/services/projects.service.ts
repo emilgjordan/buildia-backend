@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -17,6 +18,7 @@ import { UsersService } from '../../users/services/users.service';
 import { ProjectsRepository } from '../repositories/projects.repository';
 import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { UpdateProjectDto } from '../dto/input/update-project.dto';
+import { ChatGateway } from 'src/chat/chat.gateway';
 
 @Injectable()
 export class ProjectsService {
@@ -24,7 +26,85 @@ export class ProjectsService {
     private readonly projectsRepository: ProjectsRepository,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
   ) {}
+
+  async requestJoinProject(
+    projectId: string,
+    currentUserId: string,
+  ): Promise<void> {
+    console.log(projectId);
+    const projectDocument = await this.projectsRepository.findOne({
+      _id: projectId,
+    });
+    if (!projectDocument) {
+      throw new NotFoundException('Project not found');
+    }
+    if (
+      projectDocument.users
+        .map((user) => user.toString())
+        .includes(currentUserId)
+    ) {
+      throw new ConflictException('User is already a member of this project');
+    }
+    if (
+      !projectDocument.joinRequests
+        .map((user) => user.toString())
+        .includes(currentUserId)
+    ) {
+      await this.projectsRepository.updateOne(
+        { _id: projectId },
+        { $push: { joinRequests: new Types.ObjectId(currentUserId) } },
+      );
+    }
+    this.chatGateway.notifyJoinRequest(projectId, currentUserId);
+  }
+
+  async approveJoinRequest(projectId: string, userId: string): Promise<void> {
+    const projectDocument = await this.projectsRepository.findOne({
+      _id: projectId,
+    });
+    if (!projectDocument) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (
+      projectDocument.joinRequests
+        .map((user) => user.toString())
+        .includes(userId)
+    ) {
+      await this.projectsRepository.updateOne(
+        { _id: projectId },
+        {
+          $pull: { joinRequests: new Types.ObjectId(userId) },
+        },
+      );
+
+      await this.projectsRepository.updateOne(
+        { _id: projectId },
+        {
+          $push: { users: new Types.ObjectId(userId) },
+        },
+      );
+
+      this.usersService.addProjectToUser(userId, projectId);
+    }
+    this.chatGateway.notifyJoinApproval(projectId, userId);
+  }
+
+  async userInProject(userId: string, projectId: string): Promise<boolean> {
+    const projectDocument = await this.projectsRepository.findOne({
+      _id: projectId,
+    });
+    if (!projectDocument) {
+      throw new NotFoundException('Project not found');
+    }
+    const userInProject = projectDocument.users
+      .map((user) => user.toString())
+      .includes(userId);
+    return userInProject;
+  }
 
   async getProjectById(projectId: string, populate: boolean): Promise<Project> {
     const projectDocument = await this.projectsRepository.findOne({
@@ -34,7 +114,7 @@ export class ProjectsService {
       throw new InternalServerErrorException('Project not found');
     }
     if (populate) {
-      return this.toProject(await projectDocument.populate('owner', 'users'));
+      return this.toProject(await projectDocument.populate('creator users'));
     }
     return this.toProject(projectDocument);
   }
@@ -49,7 +129,7 @@ export class ProjectsService {
       return await Promise.all(
         projectDocuments.map(async (projectDocument) => {
           const populatedProject =
-            await projectDocument.populate('owner users');
+            await projectDocument.populate('creator users');
           return this.toProject(populatedProject);
         }),
       );
@@ -65,16 +145,16 @@ export class ProjectsService {
     populate: boolean,
     currentUserId: string,
   ): Promise<Project> {
-    const ownerId = new Types.ObjectId(currentUserId);
+    const creatorId = new Types.ObjectId(currentUserId);
     const newProject = {
       ...createProjectDto,
-      owner: ownerId,
-      users: [ownerId],
+      creator: creatorId,
+      users: [creatorId],
     };
     const projectDocument = await this.projectsRepository.create(newProject);
     this.usersService.addProjectToUser(currentUserId, projectDocument._id);
     return populate
-      ? this.toProject(await projectDocument.populate('owner', 'users'))
+      ? this.toProject(await projectDocument.populate('creator', 'users'))
       : this.toProject(projectDocument);
   }
 
@@ -90,8 +170,10 @@ export class ProjectsService {
     if (!projectDocument) {
       throw new NotFoundException('Project not found');
     }
-    if (projectDocument.owner.toString() !== currentUserId) {
-      throw new UnauthorizedException('You are not the owner of this project');
+    if (projectDocument.creator.toString() !== currentUserId) {
+      throw new UnauthorizedException(
+        'You are not the creator of this project',
+      );
     }
     const updatedProjectDocument = await this.projectsRepository.updateOne(
       { _id: projectId },
@@ -99,7 +181,7 @@ export class ProjectsService {
     );
     if (populate) {
       return this.toProject(
-        await updatedProjectDocument.populate('owner', 'users'),
+        await updatedProjectDocument.populate('creator', 'users'),
       );
     }
     return this.toProject(updatedProjectDocument);
@@ -115,8 +197,10 @@ export class ProjectsService {
     if (!projectDocument) {
       throw new NotFoundException('Project not found');
     }
-    if (projectDocument.owner.toString() !== currentUserId) {
-      throw new UnauthorizedException('You are not the owner of this project');
+    if (projectDocument.creator.toString() !== currentUserId) {
+      throw new UnauthorizedException(
+        'You are not the creator of this project',
+      );
     }
     await this.projectsRepository.deleteOne({ _id: projectId });
     return { message: 'Project deleted successfully' };
@@ -129,17 +213,17 @@ export class ProjectsService {
   }
 
   toProject(projectDocument: ProjectDocument): Project {
-    const { _id, __v, owner, users, ...project } = projectDocument.toObject();
-    let ownerNew;
+    const { _id, __v, creator, users, ...project } = projectDocument.toObject();
+    let creatorNew;
     let usersNew;
 
-    if (projectDocument.owner instanceof Types.ObjectId) {
-      ownerNew = projectDocument.owner.toString();
-    } else if (typeof projectDocument.owner === 'object') {
-      ownerNew = this.usersService.toUser(projectDocument.owner);
+    if (projectDocument.creator instanceof Types.ObjectId) {
+      creatorNew = projectDocument.creator.toString();
+    } else if (typeof projectDocument.creator === 'object') {
+      creatorNew = this.usersService.toUser(projectDocument.creator);
     } else {
       throw new InternalServerErrorException(
-        'Invalid project document owner data',
+        'Invalid project document creator data',
       );
     }
 
@@ -164,7 +248,7 @@ export class ProjectsService {
     return {
       ...project,
       projectId: _id.toString(),
-      owner: ownerNew,
+      creator: creatorNew,
       users: usersNew,
     };
   }

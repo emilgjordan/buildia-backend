@@ -51,12 +51,11 @@ export class UsersController {
   @Get()
   async getUsers(
     @Body() userFilterQuery: GetUsersFilterDto,
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
   ): Promise<UserResponseDto[]> {
-    const shouldPopulate = populate === 'true';
     const users: User[] = await this.usersService.getUsers(
       userFilterQuery,
-      shouldPopulate,
+      populate,
     );
     return users.map((user) => this.usersService.toUserResponseDto(user));
   }

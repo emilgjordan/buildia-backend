@@ -13,13 +13,20 @@ export class ProjectSchemaDefinition {
   description: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  owner: Types.ObjectId | UserDocument;
+  creator: Types.ObjectId | UserDocument;
 
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     required: true,
   })
   users: Types.ObjectId[] | UserDocument[];
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    required: true,
+    default: [],
+  })
+  joinRequests: Types.ObjectId[] | UserDocument[];
 
   @Prop({ default: 0 })
   likes: number;
