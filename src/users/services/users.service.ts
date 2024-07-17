@@ -31,17 +31,22 @@ export class UsersService {
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.toUser(userDocument);
+    return populate
+      ? this.toUser(await userDocument.populate('projects'))
+      : this.toUser(userDocument);
   }
 
   async getUserByUsername(username: string, populate: boolean): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       username: username,
     });
+    console.log(populate);
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.toUser(userDocument);
+    return populate
+      ? this.toUser(await userDocument.populate('projects'))
+      : this.toUser(userDocument);
   }
 
   async getUserByEmail(email: string, populate: boolean): Promise<User> {
@@ -51,7 +56,9 @@ export class UsersService {
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
-    return this.toUser(userDocument);
+    return populate
+      ? this.toUser(await userDocument.populate('projects'))
+      : this.toUser(userDocument);
   }
 
   async getUsers(

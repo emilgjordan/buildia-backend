@@ -9,17 +9,23 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { JoinProjectDto } from './dto/join-project.dto';
 import { ChatMessageDto } from './dto/chat-message.dto';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { User } from '../users/interfaces/user.interface';
-import { Inject, UseFilters, UseGuards, forwardRef } from '@nestjs/common';
+import {
+  Inject,
+  UnauthorizedException,
+  UseFilters,
+  UseGuards,
+  forwardRef,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthService } from '../auth/services/auth.service';
-import { JwtService } from '@nestjs/jwt';
 import { ProjectsService } from 'src/projects/services/projects.service';
-import { WsExceptionsFilter } from 'src/common/filters/ws-exceptions.filter';
+import { WsJwtAuthGuard } from 'src/auth/guards/ws-jwt-auth.guard';
+import { User } from 'src/users/interfaces/user.interface';
+import { WsExceptionsFilter } from '../common/filters/ws-exceptions.filter';
+import { Types } from 'mongoose';
 
+@UseFilters(new WsExceptionsFilter())
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
@@ -31,13 +37,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   notifyJoinRequest(projectId: string, userId: string) {
-    this.server.to(projectId).emit('user:request_join', { userId });
+    console.log('emmited user:request_join');
+    this.server
+      .to(projectId)
+      .emit('user:request_join', { projectId: projectId, userId: userId });
   }
 
   notifyJoinApproval(projectId: string, userId: string) {
-    this.server.to(projectId).emit('user:joined', { userId });
+    this.server
+      .to(projectId)
+      .emit('user:joined', { projectId: projectId, userId: userId });
   }
-
+  @UseFilters(new WsExceptionsFilter())
   async handleConnection(client: Socket) {
     const auth = client.handshake.auth.token || client.handshake.headers.token;
     if (!auth) {
@@ -47,17 +58,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     const token = auth.split(' ')[1];
 
-    const user = await this.authService.verify(token);
-    if (!user) {
+    let user;
+    try {
+      user = await this.authService.verifyToken(token);
+    } catch (error) {
       client.disconnect();
-      console.log('Unauthorized: Invalid token');
-      //   throw new WsException('Unauthorized: Invalid token');
+      return;
     }
-
-    const projects = user.projects.map((project) => project.toString());
-    projects.forEach((projectId) => {
-      client.join(projectId);
-    });
 
     console.log(`Client connected: ${client.id}`);
   }
@@ -66,8 +73,36 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Client disconnected: ${client.id}`);
   }
 
+  @SubscribeMessage('room:join')
+  @UseGuards(WsJwtAuthGuard)
+  async handleJoinRoom(
+    @MessageBody() projectId: string,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    console.log(client['user'].userId);
+    console.log(Types.ObjectId.isValid(client['user'].userId));
+    console.log(projectId);
+    if (
+      !(await this.projectsService.userInProject(
+        client['user'].userId,
+        projectId,
+      ))
+    ) {
+      throw new WsException('Unauthorized: User not in project');
+    }
+    client.join(projectId);
+  }
+
+  @SubscribeMessage('room:leave')
+  async handleLeaveRoom(
+    @MessageBody() projectId: string,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    client.leave(projectId);
+  }
+
   @SubscribeMessage('message:send')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(WsJwtAuthGuard)
   async handleMessage(
     @MessageBody() chatMessageDto: ChatMessageDto,
     @ConnectedSocket() client: Socket,

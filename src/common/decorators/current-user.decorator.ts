@@ -7,9 +7,9 @@ export const getCurrentUserByContext = (context: ExecutionContext): User => {
     return context.switchToHttp().getRequest().user;
   } else if (context.getType() === 'ws') {
     return context.switchToWs().getClient().handshake.user;
+  } else {
+    throw new Error('Unsupported context type');
   }
-  const ctx = GqlExecutionContext.create(context);
-  return ctx.getContext().req.user;
 };
 
 export const CurrentUser = createParamDecorator(

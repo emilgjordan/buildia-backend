@@ -6,6 +6,7 @@ export interface Project {
   description: string;
   creator: string | User;
   users: string[] | User[];
+  joinRequests: string[] | User[];
   likes: number;
   createdAt: Date;
   updatedAt: Date;

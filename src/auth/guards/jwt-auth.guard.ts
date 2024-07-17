@@ -14,33 +14,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
-  canActivate(context: ExecutionContext) {
-    if (context.getType() === 'ws') {
-      return this.validateTokenWs(context);
-    }
-    return super.canActivate(context);
-  }
-
-  async validateTokenWs(context: ExecutionContext): Promise<boolean> {
-    const client = context.switchToWs().getClient();
-
-    const auth = client.handshake.auth.token || client.handshake.headers.token;
-    if (!auth) {
-      throw new WsException('Unauthorized: No token provided');
-    }
-    const token = auth.split(' ')[1];
-
-    const user = await this.authService.verify(token);
-    if (!user) {
-      throw new WsException('Unauthorized: Invalid token');
-    }
-    client.user = user;
-    return true;
-  }
-
   handleRequest(err, user, info) {
     if (err || !user) {
-      throw err || new UnauthorizedException();
+      if (info && info.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token has expired');
+      } else if (info && info.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid token');
+      } else {
+        throw new UnauthorizedException('Unauthorized');
+      }
     }
     return user;
   }

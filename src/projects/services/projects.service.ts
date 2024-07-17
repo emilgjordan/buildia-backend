@@ -34,7 +34,6 @@ export class ProjectsService {
     projectId: string,
     currentUserId: string,
   ): Promise<void> {
-    console.log(projectId);
     const projectDocument = await this.projectsRepository.findOne({
       _id: projectId,
     });
@@ -48,6 +47,7 @@ export class ProjectsService {
     ) {
       throw new ConflictException('User is already a member of this project');
     }
+
     if (
       !projectDocument.joinRequests
         .map((user) => user.toString())
@@ -94,6 +94,9 @@ export class ProjectsService {
   }
 
   async userInProject(userId: string, projectId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(projectId)) {
+      throw new InternalServerErrorException('Invalid ID');
+    }
     const projectDocument = await this.projectsRepository.findOne({
       _id: projectId,
     });
@@ -114,7 +117,9 @@ export class ProjectsService {
       throw new InternalServerErrorException('Project not found');
     }
     if (populate) {
-      return this.toProject(await projectDocument.populate('creator users'));
+      return this.toProject(
+        await projectDocument.populate('creator users joinRequests'),
+      );
     }
     return this.toProject(projectDocument);
   }
@@ -128,8 +133,9 @@ export class ProjectsService {
     if (populate) {
       return await Promise.all(
         projectDocuments.map(async (projectDocument) => {
-          const populatedProject =
-            await projectDocument.populate('creator users');
+          const populatedProject = await projectDocument.populate(
+            'creator users joinRequests',
+          );
           return this.toProject(populatedProject);
         }),
       );
@@ -154,7 +160,9 @@ export class ProjectsService {
     const projectDocument = await this.projectsRepository.create(newProject);
     this.usersService.addProjectToUser(currentUserId, projectDocument._id);
     return populate
-      ? this.toProject(await projectDocument.populate('creator', 'users'))
+      ? this.toProject(
+          await projectDocument.populate('creator users joinRequests'),
+        )
       : this.toProject(projectDocument);
   }
 
@@ -181,7 +189,7 @@ export class ProjectsService {
     );
     if (populate) {
       return this.toProject(
-        await updatedProjectDocument.populate('creator', 'users'),
+        await updatedProjectDocument.populate('creator users joinRequests'),
       );
     }
     return this.toProject(updatedProjectDocument);
@@ -216,6 +224,7 @@ export class ProjectsService {
     const { _id, __v, creator, users, ...project } = projectDocument.toObject();
     let creatorNew;
     let usersNew;
+    let joinRequestsNew;
 
     if (projectDocument.creator instanceof Types.ObjectId) {
       creatorNew = projectDocument.creator.toString();
@@ -245,11 +254,34 @@ export class ProjectsService {
       );
     }
 
+    if (projectDocument.joinRequests.length === 0) {
+      joinRequestsNew = [];
+    } else if (
+      projectDocument.joinRequests.every(
+        (user) => user instanceof Types.ObjectId,
+      )
+    ) {
+      joinRequestsNew = projectDocument.joinRequests.map((user) =>
+        user.toString(),
+      );
+    } else if (
+      projectDocument.joinRequests.every((user) => typeof user === 'object')
+    ) {
+      joinRequestsNew = projectDocument.joinRequests.map((user) =>
+        this.usersService.toUser(user),
+      );
+    } else {
+      throw new InternalServerErrorException(
+        'Invalid project document joinRequests data',
+      );
+    }
+
     return {
       ...project,
       projectId: _id.toString(),
       creator: creatorNew,
       users: usersNew,
+      joinRequests: joinRequestsNew,
     };
   }
 }

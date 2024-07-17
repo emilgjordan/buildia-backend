@@ -13,6 +13,7 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { ChatModule } from './chat/chat.module';
 import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
+import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +39,10 @@ import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_FILTER,
+      useClass: JwtExceptionFilter,
+    },
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,

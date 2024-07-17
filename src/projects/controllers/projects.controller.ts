@@ -45,6 +45,7 @@ export class ProjectsController {
     if (!Types.ObjectId.isValid(projectId)) {
       throw new BadRequestException('Invalid project ID');
     }
+
     await this.projectsService.requestJoinProject(
       projectId,
       currentUser.userId,
@@ -72,6 +73,7 @@ export class ProjectsController {
   async getProjects(
     @Query('populate') populate: string,
   ): Promise<ProjectResponseDto[]> {
+    console.log('requesting projects');
     const shouldPopulate = populate === 'true';
     const projects: Project[] = await this.projectsService.getProjects(
       {},

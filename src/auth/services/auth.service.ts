@@ -1,4 +1,9 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  forwardRef,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { UsersService } from '../../users/services/users.service';
@@ -13,37 +18,42 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validate(email: string, password: string): Promise<User | null> {
+  async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.getUserByEmail(email, false);
 
     if (!user) {
-      return null;
+      throw new UnauthorizedException('User not found');
     }
 
     const passwordIsValid = await bcrypt.compare(password, user.hashedPassword);
-    return passwordIsValid ? user : null;
+    if (!passwordIsValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+    return user;
   }
 
-  login(user: User): { access_token: string } {
+  generateAccessToken(user: User): string {
     const payload = {
       email: user.email,
       sub: user.userId,
     };
 
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.jwtService.sign(payload);
   }
 
-  async verify(token: string): Promise<User> {
-    const decoded = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
+  async verifyToken(token: string): Promise<User> {
+    let decoded: any;
+    try {
+      decoded = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Token verification failed');
+    }
 
     const user = await this.usersService.getUserByEmail(decoded.email, false);
-
     if (!user) {
-      throw new Error('Unable to get the user from decoded token.');
+      throw new UnauthorizedException('User not found from token');
     }
 
     return user;
