@@ -14,6 +14,7 @@ import jwtConfig from './config/jwt.config';
 import { ChatModule } from './chat/chat.module';
 import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
 import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
+import { MessagesModule } from './messages/messages.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,6 +36,7 @@ import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
     AuthModule,
     ProjectsModule,
     ChatModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [
