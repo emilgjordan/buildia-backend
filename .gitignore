@@ -3,9 +3,9 @@
 /node_modules
 
 # environment file
-.env.production
-.env.development
-.env.test
+.production.env
+.development.env
+.test.env
 
 # Logs
 logs

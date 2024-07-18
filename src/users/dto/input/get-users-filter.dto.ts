@@ -43,7 +43,7 @@ export class GetUsersFilterDto {
 
   @IsOptional()
   @IsString()
-  readonly projects?: string[];
+  readonly ideas?: string[];
 
   @IsOptional()
   @IsBoolean()

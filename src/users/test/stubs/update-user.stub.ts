@@ -1,7 +1,7 @@
-import { User } from 'src/users/interfaces/user.interface';
+import { User } from '../../interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
 
-export const updateUserStub = (): any => {
+export const updateUserStub = (): Partial<User> => {
   return {
     firstName: 'Johnny',
     lastName: 'Test',
@@ -10,7 +10,7 @@ export const updateUserStub = (): any => {
     bio: 'Got a head of fiery hair, and a turbo-charged backpack',
     portfolioUrl: 'https://www.johnnytest.com',
     skills: ['mischief', 'saving-the-world'],
-    projects: ['experiment', 'battle'],
+    projects: [],
     isEmailVerified: false,
     isPremium: false,
     role: 'user',

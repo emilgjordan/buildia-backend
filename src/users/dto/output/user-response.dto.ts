@@ -1,3 +1,5 @@
+import { ProjectResponseDto } from '../../../projects/dto/output/project-response.dto';
+
 export class UserResponseDto {
   userId: string;
   firstName: string;
@@ -7,7 +9,7 @@ export class UserResponseDto {
   bio: string;
   portfolioUrl: string;
   skills: string[];
-  projects: string[];
+  projects: string[] | ProjectResponseDto[];
   isEmailVerified: boolean;
   isPremium: boolean;
   role: string;

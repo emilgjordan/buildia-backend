@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { User } from '../../users/interfaces/user.interface';
@@ -15,11 +15,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  //might need to transform User class to GraphQL User type
   async validate(validationPayload: {
     email: string;
     sub: string;
   }): Promise<User | null> {
-    return this.usersService.getUserByEmail(validationPayload.email);
+    const user = this.usersService.getUserByEmail(
+      validationPayload.email,
+      false,
+    );
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
   }
 }

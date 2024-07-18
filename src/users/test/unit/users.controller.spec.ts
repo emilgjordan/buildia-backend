@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UsersServiceMock } from '../mocks/users.service.mock';
 import { AuthServiceMock } from '../mocks/auth.service.mock';
 import { UsersService } from '../../services/users.service';
-import { AuthService } from '../../../auth/auth.service';
+import { AuthService } from '../../../auth/services/auth.service';
 import { userStub } from '../stubs/user.stub';
 import { userResponseStub } from '../stubs/user-response.stub';
 import { createUserStub } from '../stubs/create-user.stub';
