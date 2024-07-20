@@ -1,4 +1,4 @@
 import { Controller } from '@nestjs/common';
 
-@Controller('messages')
+@Controller('projects/:projectId/messages')
 export class MessagesController {}
