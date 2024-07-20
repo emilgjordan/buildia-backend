@@ -71,13 +71,12 @@ export class ProjectsController {
 
   @Get()
   async getProjects(
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
   ): Promise<ProjectResponseDto[]> {
     console.log('requesting projects');
-    const shouldPopulate = populate === 'true';
     const projects: Project[] = await this.projectsService.getProjects(
       {},
-      shouldPopulate,
+      populate,
     );
     return projects.map((project) =>
       this.projectsService.toProjectResponseDto(project),
@@ -88,13 +87,12 @@ export class ProjectsController {
   @UseGuards(JwtAuthGuard)
   async createProject(
     @Body() createProjectDto: CreateProjectDto,
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
     @CurrentUser() currentUser: User,
   ): Promise<ProjectResponseDto> {
-    const shouldPopulate = populate === 'true';
     const project: Project = await this.projectsService.createProject(
       createProjectDto,
-      shouldPopulate,
+      populate,
       currentUser.userId,
     );
     return this.projectsService.toProjectResponseDto(project);
