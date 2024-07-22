@@ -17,13 +17,14 @@ import {
   UseGuards,
   forwardRef,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthService } from '../auth/services/auth.service';
 import { ProjectsService } from 'src/projects/services/projects.service';
 import { WsJwtAuthGuard } from 'src/auth/guards/ws-jwt-auth.guard';
 import { User } from 'src/users/interfaces/user.interface';
 import { WsExceptionsFilter } from '../common/filters/ws-exceptions.filter';
 import { Types } from 'mongoose';
+import { MessagesService } from '../messages/services/messages.service';
+import { CreateMessageDto } from 'src/messages/dto/input/create-message.dto';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
@@ -31,9 +32,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
   constructor(
-    private authService: AuthService,
+    private readonly authService: AuthService,
     @Inject(forwardRef(() => ProjectsService))
     private readonly projectsService: ProjectsService,
+    private readonly messagesService: MessagesService,
   ) {}
 
   notifyJoinRequest(projectId: string, userId: string) {
@@ -122,6 +124,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       message: content,
       timestamp: new Date(),
     };
+
+    await this.messagesService.createMessage(
+      {
+        type: 'user',
+        projectId,
+        content,
+      },
+      false,
+      client['user'].userId,
+    );
 
     this.server.to(projectId).emit('message:new', message);
   }

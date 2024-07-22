@@ -14,13 +14,14 @@ import { UsersService } from 'src/users/services/users.service';
 import { ProjectsService } from 'src/projects/services/projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateMessageDto } from '../dto/input/create-message.dto';
+import { ConversionService } from '../../conversion/conversion.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
     private readonly messagesRepository: MessagesRepository,
-    private readonly usersService: UsersService,
     private readonly projectsService: ProjectsService,
+    private readonly conversionService: ConversionService,
   ) {}
 
   async getMessagesByProject(
@@ -46,12 +47,18 @@ export class MessagesService {
         messageDocuments.map(async (messageDocument) => {
           const populatedMessage =
             await messageDocument.populate('project user');
-          return this.toMessage(populatedMessage);
+          return this.conversionService.toEntity<MessageDocument, Message>(
+            'Message',
+            populatedMessage,
+          );
         }),
       );
     } else {
       return messageDocuments.map((messageDocument) =>
-        this.toMessage(messageDocument),
+        this.conversionService.toEntity<MessageDocument, Message>(
+          'Message',
+          messageDocument,
+        ),
       );
     }
   }
@@ -75,38 +82,5 @@ export class MessagesService {
     } else {
       throw new BadRequestException('Invalid message type');
     }
-  }
-
-  toMessage(messageDocument: MessageDocument): Message {
-    const { _id, __v, project, user, ...message } = messageDocument.toObject();
-    let projectNew;
-    let userNew;
-
-    if (project instanceof Types.ObjectId) {
-      projectNew = project.toString();
-    } else if (typeof project === 'object') {
-      projectNew = this.projectsService.toProject(project);
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid message document project data',
-      );
-    }
-
-    if (user instanceof Types.ObjectId) {
-      userNew = user.toString();
-    } else if (typeof user === 'object') {
-      projectNew = this.usersService.toUser(user);
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid message document user data',
-      );
-    }
-
-    return {
-      ...message,
-      messageId: _id.toString(),
-      project: projectNew,
-      user: userNew,
-    };
   }
 }

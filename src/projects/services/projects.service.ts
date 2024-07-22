@@ -19,6 +19,7 @@ import { ProjectsRepository } from '../repositories/projects.repository';
 import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { UpdateProjectDto } from '../dto/input/update-project.dto';
 import { ChatGateway } from 'src/chat/chat.gateway';
+import { ConversionService } from '../../conversion/conversion.service';
 
 @Injectable()
 export class ProjectsService {
@@ -28,6 +29,7 @@ export class ProjectsService {
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
+    private readonly conversionService: ConversionService,
   ) {}
 
   async requestJoinProject(
@@ -117,11 +119,15 @@ export class ProjectsService {
       throw new InternalServerErrorException('Project not found');
     }
     if (populate) {
-      return this.toProject(
+      return this.conversionService.toEntity<ProjectDocument, Project>(
+        'Project',
         await projectDocument.populate('creator users joinRequests'),
       );
     }
-    return this.toProject(projectDocument);
+    return this.conversionService.toEntity<ProjectDocument, Project>(
+      'Project',
+      projectDocument,
+    );
   }
 
   async getProjects(
@@ -136,12 +142,16 @@ export class ProjectsService {
           const populatedProject = await projectDocument.populate(
             'creator users joinRequests',
           );
-          return this.toProject(populatedProject);
+          return this.conversionService.toEntity<ProjectDocument, Project>(
+            'Project',
+            populatedProject,
+          );
         }),
       );
     } else {
-      return projectDocuments.map((projectDocument) =>
-        this.toProject(projectDocument),
+      return this.conversionService.toEntities<ProjectDocument, Project>(
+        'Project',
+        projectDocuments,
       );
     }
   }
@@ -160,10 +170,14 @@ export class ProjectsService {
     const projectDocument = await this.projectsRepository.create(newProject);
     this.usersService.addProjectToUser(currentUserId, projectDocument._id);
     return populate
-      ? this.toProject(
+      ? this.conversionService.toEntity<ProjectDocument, Project>(
+          'Project',
           await projectDocument.populate('creator users joinRequests'),
         )
-      : this.toProject(projectDocument);
+      : this.conversionService.toEntity<ProjectDocument, Project>(
+          'Project',
+          projectDocument,
+        );
   }
 
   async updateProject(
@@ -188,11 +202,15 @@ export class ProjectsService {
       updateProjectDto,
     );
     if (populate) {
-      return this.toProject(
+      return this.conversionService.toEntity<ProjectDocument, Project>(
+        'Project',
         await updatedProjectDocument.populate('creator users joinRequests'),
       );
     }
-    return this.toProject(updatedProjectDocument);
+    return this.conversionService.toEntity<ProjectDocument, Project>(
+      'Project',
+      updatedProjectDocument,
+    );
   }
 
   async removeProject(
@@ -212,76 +230,5 @@ export class ProjectsService {
     }
     await this.projectsRepository.deleteOne({ _id: projectId });
     return { message: 'Project deleted successfully' };
-  }
-
-  toProjectResponseDto(project: Project): ProjectResponseDto {
-    //exclude sensitive data from response
-
-    return project;
-  }
-
-  toProject(projectDocument: ProjectDocument): Project {
-    const { _id, __v, creator, users, ...project } = projectDocument.toObject();
-    let creatorNew;
-    let usersNew;
-    let joinRequestsNew;
-
-    if (projectDocument.creator instanceof Types.ObjectId) {
-      creatorNew = projectDocument.creator.toString();
-    } else if (typeof projectDocument.creator === 'object') {
-      creatorNew = this.usersService.toUser(projectDocument.creator);
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid project document creator data',
-      );
-    }
-
-    if (projectDocument.users.length === 0) {
-      usersNew = [];
-    } else if (
-      projectDocument.users.every((user) => user instanceof Types.ObjectId)
-    ) {
-      usersNew = projectDocument.users.map((user) => user.toString());
-    } else if (
-      projectDocument.users.every((user) => typeof user === 'object')
-    ) {
-      usersNew = projectDocument.users.map((user) =>
-        this.usersService.toUser(user),
-      );
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid project document users data',
-      );
-    }
-
-    if (projectDocument.joinRequests.length === 0) {
-      joinRequestsNew = [];
-    } else if (
-      projectDocument.joinRequests.every(
-        (user) => user instanceof Types.ObjectId,
-      )
-    ) {
-      joinRequestsNew = projectDocument.joinRequests.map((user) =>
-        user.toString(),
-      );
-    } else if (
-      projectDocument.joinRequests.every((user) => typeof user === 'object')
-    ) {
-      joinRequestsNew = projectDocument.joinRequests.map((user) =>
-        this.usersService.toUser(user),
-      );
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid project document joinRequests data',
-      );
-    }
-
-    return {
-      ...project,
-      projectId: _id.toString(),
-      creator: creatorNew,
-      users: usersNew,
-      joinRequests: joinRequestsNew,
-    };
   }
 }

@@ -15,6 +15,7 @@ import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dto/input/create-user.dto';
 import { UserResponseDto } from '../dto/output/user-response.dto';
 import { ProjectsService } from '../../projects/services/projects.service';
+import { ConversionService } from '../../conversion/conversion.service';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,7 @@ export class UsersService {
     private userRepository: UsersRepository,
     @Inject(forwardRef(() => ProjectsService))
     private projectsService: ProjectsService,
+    private conversionService: ConversionService,
   ) {}
 
   async getUserById(userId: string, populate: boolean): Promise<User> {
@@ -32,8 +34,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return populate
-      ? this.toUser(await userDocument.populate('projects'))
-      : this.toUser(userDocument);
+      ? this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          await userDocument.populate('projects'),
+        )
+      : this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          userDocument,
+        );
   }
 
   async getUserByUsername(username: string, populate: boolean): Promise<User> {
@@ -45,8 +53,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return populate
-      ? this.toUser(await userDocument.populate('projects'))
-      : this.toUser(userDocument);
+      ? this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          await userDocument.populate('projects'),
+        )
+      : this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          userDocument,
+        );
   }
 
   async getUserByEmail(email: string, populate: boolean): Promise<User> {
@@ -57,8 +71,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return populate
-      ? this.toUser(await userDocument.populate('projects'))
-      : this.toUser(userDocument);
+      ? this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          await userDocument.populate('projects'),
+        )
+      : this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          userDocument,
+        );
   }
 
   async getUsers(
@@ -69,11 +89,18 @@ export class UsersService {
       await this.userRepository.findMany(userFilterQuery);
     return populate
       ? Promise.all(
-          userDocuments.map(async (userDocument) =>
-            this.toUser(await userDocument.populate('projects')),
-          ),
+          userDocuments.map(async (userDocument) => {
+            const populatedUser = await userDocument.populate('projects');
+            return this.conversionService.toEntity<UserDocument, User>(
+              'User',
+              populatedUser,
+            );
+          }),
         )
-      : userDocuments.map((userDocument) => this.toUser(userDocument));
+      : this.conversionService.toEntities<UserDocument, User>(
+          'User',
+          userDocuments,
+        );
   }
 
   async createUser(
@@ -103,8 +130,14 @@ export class UsersService {
       await this.userRepository.create(newUser);
 
     return populate
-      ? this.toUser(await createdUserDocument.populate('projects'))
-      : this.toUser(createdUserDocument);
+      ? this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          await createdUserDocument.populate('projects'),
+        )
+      : this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          createdUserDocument,
+        );
   }
 
   async updateUser(
@@ -126,8 +159,14 @@ export class UsersService {
       await this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
 
     return populate
-      ? this.toUser(await updatedUserDocument.populate('projects'))
-      : this.toUser(updatedUserDocument);
+      ? this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          await updatedUserDocument.populate('projects'),
+        )
+      : this.conversionService.toEntity<UserDocument, User>(
+          'User',
+          updatedUserDocument,
+        );
   }
 
   async removeUser(
@@ -153,40 +192,5 @@ export class UsersService {
       { _id: userId },
       { $push: { projects: projectId } },
     );
-  }
-
-  toUserResponseDto(user: User): UserResponseDto {
-    //exclude sensitive data from response
-    const { hashedPassword, ...userResponseDto } = user;
-    return userResponseDto;
-  }
-
-  toUser(userDocument: UserDocument): User {
-    const { _id, projects, __v, ...user } = userDocument.toObject();
-    let projectsNew;
-
-    if (userDocument.projects.length === 0) {
-      projectsNew = [];
-    } else if (
-      userDocument.projects.every(
-        (project) => project instanceof Types.ObjectId,
-      )
-    ) {
-      projectsNew = userDocument.projects.map((project) => project.toString());
-    } else if (
-      userDocument.projects.every((project) => typeof project === 'object')
-    ) {
-      projectsNew = userDocument.projects.map((project) =>
-        this.projectsService.toProject(project),
-      );
-    } else {
-      throw new InternalServerErrorException('Invalid user projects data');
-    }
-
-    return {
-      ...user,
-      userId: _id.toString(),
-      projects: projectsNew,
-    };
   }
 }

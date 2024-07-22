@@ -7,6 +7,7 @@ import { ProjectSchema } from './schemas/project.schema';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { ChatModule } from '../chat/chat.module';
+import { ConversionModule } from 'src/conversion/conversion.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ChatModule } from '../chat/chat.module';
     AuthModule,
     forwardRef(() => UsersModule),
     forwardRef(() => ChatModule),
+    ConversionModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService, ProjectsRepository],

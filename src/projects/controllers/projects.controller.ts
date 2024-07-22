@@ -16,10 +16,14 @@ import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from 'src/users/interfaces/user.interface';
+import { ConversionService } from 'src/conversion/conversion.service';
 
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly conversionService: ConversionService,
+  ) {}
 
   @Get(':projectId')
   async getProjectById(
@@ -33,7 +37,10 @@ export class ProjectsController {
       projectId,
       populate,
     );
-    return this.projectsService.toProjectResponseDto(project);
+    return this.conversionService.toResponseDto<Project, ProjectResponseDto>(
+      'Project',
+      project,
+    );
   }
 
   @Post(':projectId/join-request')
@@ -78,8 +85,9 @@ export class ProjectsController {
       {},
       populate,
     );
-    return projects.map((project) =>
-      this.projectsService.toProjectResponseDto(project),
+    return this.conversionService.toResponseDtos<Project, ProjectResponseDto>(
+      'Project',
+      projects,
     );
   }
 
@@ -95,6 +103,9 @@ export class ProjectsController {
       populate,
       currentUser.userId,
     );
-    return this.projectsService.toProjectResponseDto(project);
+    return this.conversionService.toResponseDto<Project, ProjectResponseDto>(
+      'Project',
+      project,
+    );
   }
 }

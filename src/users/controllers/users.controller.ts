@@ -23,13 +23,14 @@ import { GetUsersFilterDto } from '../dto/input/get-users-filter.dto';
 import { AuthService } from '../../auth/services/auth.service';
 import { CreateUserResponseDto } from '../dto/output/create-user-response.dto';
 import { Types } from 'mongoose';
-import { IsMongoId } from 'class-validator';
+import { ConversionService } from '../../conversion/conversion.service';
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
+    private readonly conversionService: ConversionService,
   ) {}
 
   @Get('me')
@@ -51,7 +52,10 @@ export class UsersController {
       throw new BadRequestException('Invalid user ID');
     }
     const user: User = await this.usersService.getUserById(userId, populate);
-    return this.usersService.toUserResponseDto(user);
+    return this.conversionService.toResponseDto<User, UserResponseDto>(
+      'User',
+      user,
+    );
   }
 
   @Get()
@@ -63,7 +67,10 @@ export class UsersController {
       userFilterQuery,
       populate,
     );
-    return users.map((user) => this.usersService.toUserResponseDto(user));
+    return this.conversionService.toResponseDtos<User, UserResponseDto>(
+      'User',
+      users,
+    );
   }
 
   @Post()
@@ -79,7 +86,10 @@ export class UsersController {
     const access_token = await this.authService.generateAccessToken(user);
 
     return {
-      user: this.usersService.toUserResponseDto(user),
+      user: this.conversionService.toResponseDto<User, UserResponseDto>(
+        'User',
+        user,
+      ),
       access_token: access_token,
     };
   }
@@ -101,7 +111,10 @@ export class UsersController {
       shouldPopulate,
       currentUser.userId,
     );
-    return this.usersService.toUserResponseDto(updatedUser);
+    return this.conversionService.toResponseDto<User, UserResponseDto>(
+      'User',
+      updatedUser,
+    );
   }
   @Delete(':userId')
   @UseGuards(JwtAuthGuard)
