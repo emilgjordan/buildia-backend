@@ -13,16 +13,13 @@ import { UserDocument } from '../schemas/user.schema';
 import { User } from '../interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dto/input/create-user.dto';
-import { UserResponseDto } from '../dto/output/user-response.dto';
-import { ProjectsService } from '../../projects/services/projects.service';
 import { ConversionService } from '../../conversion/conversion.service';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UsersService {
   constructor(
     private userRepository: UsersRepository,
-    @Inject(forwardRef(() => ProjectsService))
-    private projectsService: ProjectsService,
     private conversionService: ConversionService,
   ) {}
 
@@ -192,5 +189,21 @@ export class UsersService {
       { _id: userId },
       { $push: { projects: projectId } },
     );
+  }
+
+  @OnEvent('project.userJoined')
+  async handleProjectUserJoinedEvent(payload: {
+    userId: string;
+    projectId: string;
+  }) {
+    await this.addProjectToUser(payload.userId, payload.projectId);
+  }
+
+  @OnEvent('project.created')
+  async handleProjectCreatedEvent(payload: {
+    creatorId: string;
+    projectId: string;
+  }) {
+    await this.addProjectToUser(payload.creatorId, payload.projectId);
   }
 }

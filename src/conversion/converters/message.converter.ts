@@ -1,6 +1,6 @@
 import { MessageDocument } from 'src/messages/schemas/message.schema';
 import { EntityConverter } from './entity.converter';
-import { Message } from '../../messages/interfaces/messages.interface';
+import { Message } from '../../messages/interfaces/message.interface';
 import { MessageResponseDto } from '../../messages/dto/output/message-response.dto';
 import { Types } from 'mongoose';
 import { ConversionService } from '../conversion.service';

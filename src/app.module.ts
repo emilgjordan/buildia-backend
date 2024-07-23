@@ -15,6 +15,8 @@ import { ChatModule } from './chat/chat.module';
 import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
 import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
 import { MessagesModule } from './messages/messages.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ConversionModule } from './conversion/conversion.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,12 +33,14 @@ import { MessagesModule } from './messages/messages.module';
         JWT_SECRET: Joi.string().required(),
       }),
     }),
+    EventEmitterModule.forRoot({ wildcard: true, delimiter: '.' }),
     UsersModule,
     DatabaseModule,
     AuthModule,
     ProjectsModule,
     ChatModule,
     MessagesModule,
+    ConversionModule,
   ],
   controllers: [AppController],
   providers: [

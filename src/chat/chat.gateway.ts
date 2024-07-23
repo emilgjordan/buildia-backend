@@ -10,21 +10,15 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { ChatMessageDto } from './dto/chat-message.dto';
-import {
-  Inject,
-  UnauthorizedException,
-  UseFilters,
-  UseGuards,
-  forwardRef,
-} from '@nestjs/common';
+import { UseFilters, UseGuards } from '@nestjs/common';
 import { AuthService } from '../auth/services/auth.service';
-import { ProjectsService } from 'src/projects/services/projects.service';
-import { WsJwtAuthGuard } from 'src/auth/guards/ws-jwt-auth.guard';
-import { User } from 'src/users/interfaces/user.interface';
+import { ProjectsService } from '../projects/services/projects.service';
+import { WsJwtAuthGuard } from '../auth/guards/ws-jwt-auth.guard';
 import { WsExceptionsFilter } from '../common/filters/ws-exceptions.filter';
 import { Types } from 'mongoose';
-import { MessagesService } from '../messages/services/messages.service';
-import { CreateMessageDto } from 'src/messages/dto/input/create-message.dto';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { ChatMessageResponseDto } from './dto/output/chat-message-response.dto';
+import { InternalCreateMessageDto } from 'src/messages/dto/input/internal-create-message.dto';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
@@ -33,29 +27,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly authService: AuthService,
-    @Inject(forwardRef(() => ProjectsService))
     private readonly projectsService: ProjectsService,
-    private readonly messagesService: MessagesService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  notifyJoinRequest(projectId: string, userId: string) {
-    console.log('emmited user:request_join');
+  @OnEvent('project.joinRequest')
+  handleProjectJoinRequestEvent(userId: string, projectId: string) {
+    this.notifyJoinRequest(userId, projectId);
+  }
+
+  notifyJoinRequest(userId: string, projectId: string) {
+    //console.log('emmited user:request_join');
     this.server
       .to(projectId)
       .emit('user:request_join', { projectId: projectId, userId: userId });
   }
 
-  notifyJoinApproval(projectId: string, userId: string) {
+  @OnEvent('project.userJoined')
+  handleProjectUserJoinedEvent(userId: string, projectId: string) {
+    this.notifyJoinApproval(userId, projectId);
+  }
+
+  notifyJoinApproval(userId: string, projectId: string) {
     this.server
       .to(projectId)
       .emit('user:joined', { projectId: projectId, userId: userId });
   }
+
   @UseFilters(new WsExceptionsFilter())
   async handleConnection(client: Socket) {
     const auth = client.handshake.auth.token || client.handshake.headers.token;
     if (!auth) {
       client.disconnect();
-      console.log('Unauthorized: No token provided');
+      //console.log('Unauthorized: No token provided');
       throw new WsException('Unauthorized: No token provided');
     }
     const token = auth.split(' ')[1];
@@ -110,6 +114,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const { projectId, content } = chatMessageDto;
+    if (!(await this.projectsService.projectExists(projectId))) {
+      throw new WsException('Project not found');
+    }
     if (
       !(await this.projectsService.userInProject(
         client['user'].userId,
@@ -119,22 +126,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new WsException('Unauthorized: User not in project');
     }
 
-    const message = {
-      user: client['user'].username,
+    const messageResponse: ChatMessageResponseDto = {
+      username: client['user'].username,
       message: content,
       timestamp: new Date(),
     };
 
-    await this.messagesService.createMessage(
-      {
-        type: 'user',
-        projectId,
-        content,
-      },
-      false,
-      client['user'].userId,
-    );
+    const message: InternalCreateMessageDto = {
+      type: 'user',
+      projectId: projectId,
+      userId: client['user'].userId,
+      content: content,
+    };
 
-    this.server.to(projectId).emit('message:new', message);
+    this.server.to(projectId).emit('message:new', messageResponse);
+    this.eventEmitter.emit('message.newMessage', message);
   }
 }

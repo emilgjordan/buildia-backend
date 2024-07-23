@@ -80,7 +80,7 @@ export class ProjectsController {
   async getProjects(
     @Query('populate') populate: boolean,
   ): Promise<ProjectResponseDto[]> {
-    console.log('requesting projects');
+    console.log('controller: requesting projects');
     const projects: Project[] = await this.projectsService.getProjects(
       {},
       populate,

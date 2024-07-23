@@ -5,7 +5,12 @@ import { ConversionService } from './conversion.service';
 import { MessageConverter } from './converters/message.converter';
 
 @Module({
-  providers: [ProjectConverter, UserConverter, ConversionService],
+  providers: [
+    ProjectConverter,
+    UserConverter,
+    MessageConverter,
+    ConversionService,
+  ],
   exports: [ConversionService],
 })
 export class ConversionModule implements OnModuleInit {
@@ -24,5 +29,6 @@ export class ConversionModule implements OnModuleInit {
     this.conversionService.registerConverter('User', this.userConverter);
     this.conversionService.registerConverter('Project', this.projectConverter);
     this.conversionService.registerConverter('Message', this.messageConverter);
+    console.log(this.conversionService);
   }
 }

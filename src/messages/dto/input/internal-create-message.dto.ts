@@ -1,6 +1,12 @@
-import { IsIn, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
-export class CreateMessageDto {
+export class InternalCreateMessageDto {
   @IsString()
   @IsNotEmpty()
   @IsIn(['user', 'system'])
@@ -10,6 +16,11 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsMongoId()
   projectId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  userId: string;
 
   @IsString()
   @IsNotEmpty()

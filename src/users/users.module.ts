@@ -12,7 +12,6 @@ import { ConversionModule } from 'src/conversion/conversion.module';
   imports: [
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     forwardRef(() => AuthModule),
-    forwardRef(() => ProjectsModule),
     ConversionModule,
   ],
   controllers: [UsersController],

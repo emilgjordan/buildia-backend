@@ -17,6 +17,8 @@ export class ProjectConverter extends EntityConverter<
     super();
   }
   toEntity(projectDocument: ProjectDocument): Project {
+    console.log('in project converter toEntity');
+    console.log(this.conversionService);
     const { _id, __v, creator, users, ...project } = projectDocument.toObject();
     let creatorNew;
     let usersNew;
@@ -46,7 +48,7 @@ export class ProjectConverter extends EntityConverter<
     ) {
       usersNew = this.conversionService.toEntities<UserDocument, User>(
         'User',
-        projectDocument.users,
+        projectDocument.users as UserDocument[],
       );
     } else {
       throw new InternalServerErrorException(
@@ -69,7 +71,7 @@ export class ProjectConverter extends EntityConverter<
     ) {
       joinRequestsNew = this.conversionService.toEntities<UserDocument, User>(
         'User',
-        projectDocument.joinRequests,
+        projectDocument.joinRequests as UserDocument[],
       );
     } else {
       throw new InternalServerErrorException(

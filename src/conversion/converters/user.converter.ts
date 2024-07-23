@@ -34,7 +34,7 @@ export class UserConverter extends EntityConverter<
     ) {
       projectsNew = this.conversionService.toEntities<ProjectDocument, Project>(
         'Project',
-        userDocument.projects,
+        userDocument.projects as ProjectDocument[],
       );
     } else {
       throw new InternalServerErrorException('Invalid user projects data');

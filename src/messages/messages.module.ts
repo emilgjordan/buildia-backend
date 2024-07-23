@@ -5,17 +5,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MessageSchema } from './schemas/message.schema';
 import { AuthModule } from '../auth/auth.module';
 import { ProjectsModule } from '../projects/projects.module';
-import { UsersModule } from 'src/users/users.module';
-import { ConversionModule } from 'src/conversion/conversion.module';
+import { ConversionModule } from '../conversion/conversion.module';
+import { MessagesRepository } from './repositories/messages.repository';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Message', schema: MessageSchema }]),
     AuthModule,
-    forwardRef(() => ProjectsModule),
+    ProjectsModule,
     ConversionModule,
   ],
-  providers: [MessagesService],
+  providers: [MessagesService, MessagesRepository],
   controllers: [MessagesController],
 })
 export class MessagesModule {}
