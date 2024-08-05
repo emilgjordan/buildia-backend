@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -15,6 +16,7 @@ import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../dto/input/create-user.dto';
 import { ConversionService } from '../../conversion/conversion.service';
 import { OnEvent } from '@nestjs/event-emitter';
+import { UpdateUserDto } from '../dto/input/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -139,31 +141,63 @@ export class UsersService {
 
   async updateUser(
     targetUserId: string,
-    updateUserDto: Partial<User>,
+    updateUserDto: UpdateUserDto,
     populate: boolean,
     currentUserId: string,
   ): Promise<User> {
-    const userExists = await this.userRepository.findOne({ _id: targetUserId });
-    if (!userExists) {
+    if (!Types.ObjectId.isValid(targetUserId)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
+    const user = await this.userRepository.findOne({ _id: targetUserId });
+
+    if (!user) {
       throw new NotFoundException('User not found');
     }
+
     if (targetUserId !== currentUserId) {
       throw new UnauthorizedException(
         'You do not have permission to perform this action',
       );
     }
-    const updatedUserDocument: UserDocument =
-      await this.userRepository.updateOne({ _id: targetUserId }, updateUserDto);
 
-    return populate
-      ? this.conversionService.toEntity<UserDocument, User>(
-          'User',
-          await updatedUserDocument.populate('projects'),
-        )
-      : this.conversionService.toEntity<UserDocument, User>(
-          'User',
-          updatedUserDocument,
-        );
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+      const emailExists = await this.userRepository.findOne({
+        email: updateUserDto.email,
+      });
+      if (emailExists) {
+        throw new ConflictException('Email already exists');
+      }
+    }
+
+    if (updateUserDto.username && updateUserDto.username !== user.username) {
+      const usernameExists = await this.userRepository.findOne({
+        username: updateUserDto.username,
+      });
+      if (usernameExists) {
+        throw new ConflictException('Username already exists');
+      }
+    }
+
+    let newUser;
+    if (updateUserDto.password) {
+      const { password, ...rest } = updateUserDto;
+      const saltRounds = 10;
+      let newHashedPassword = await bcrypt.hash(password, saltRounds);
+      newUser = { ...rest, hashedPassword: newHashedPassword };
+    } else {
+      newUser = updateUserDto;
+    }
+
+    const updatedUserDocument: UserDocument =
+      await this.userRepository.updateOne({ _id: targetUserId }, newUser);
+
+    return this.conversionService.toEntity<UserDocument, User>(
+      'User',
+      populate
+        ? await updatedUserDocument.populate('projects')
+        : updatedUserDocument,
+    );
   }
 
   async removeUser(

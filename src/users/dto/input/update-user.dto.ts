@@ -7,6 +7,11 @@ import {
 } from 'class-validator';
 
 export class UpdateUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly email?: string;
+
   @IsString()
   @IsNotEmpty()
   @IsOptional()
@@ -33,4 +38,8 @@ export class UpdateUserDto {
   @IsString({ each: true })
   @IsOptional()
   readonly skills?: string[];
+
+  @IsString()
+  @IsOptional()
+  readonly password?: string;
 }

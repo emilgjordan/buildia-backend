@@ -68,7 +68,7 @@ export class ProjectsService {
     );
 
     this.eventEmitter.emit('project.joinRequest', {
-      currentUserId,
+      userId: currentUserId,
       projectId,
     });
   }
@@ -138,7 +138,6 @@ export class ProjectsService {
     projectFilterQuery: any,
     populate: boolean,
   ): Promise<Project[]> {
-    console.log('service: requesting projects');
     const projectDocuments =
       await this.projectsRepository.findMany(projectFilterQuery);
     if (populate) {
@@ -146,12 +145,6 @@ export class ProjectsService {
         projectDocuments.map(async (projectDocument) => {
           const populatedProject = await projectDocument.populate(
             'creator users joinRequests',
-          );
-          console.log(
-            this.conversionService.toEntity<ProjectDocument, Project>(
-              'Project',
-              populatedProject,
-            ),
           );
           return this.conversionService.toEntity<ProjectDocument, Project>(
             'Project',

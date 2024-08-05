@@ -32,12 +32,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   @OnEvent('project.joinRequest')
-  handleProjectJoinRequestEvent(userId: string, projectId: string) {
-    this.notifyJoinRequest(userId, projectId);
+  handleProjectJoinRequestEvent(payload) {
+    console.log('emmited user:request_join');
+    this.notifyJoinRequest(payload.userId, payload.projectId);
   }
 
   notifyJoinRequest(userId: string, projectId: string) {
     //console.log('emmited user:request_join');
+    console.log('join request project id');
+    console.log(projectId);
+    console.log('join request user id');
+    console.log(userId);
     this.server
       .to(projectId)
       .emit('user:request_join', { projectId: projectId, userId: userId });
@@ -54,20 +59,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .emit('user:joined', { projectId: projectId, userId: userId });
   }
 
-  @UseFilters(new WsExceptionsFilter())
+  @UseFilters(WsExceptionsFilter)
   async handleConnection(client: Socket) {
     const auth = client.handshake.auth.token || client.handshake.headers.token;
+    console.log(auth);
     if (!auth) {
+      console.log('Unauthorized: No token provided');
       client.disconnect();
       //console.log('Unauthorized: No token provided');
       throw new WsException('Unauthorized: No token provided');
     }
+    if (!auth.startsWith('Bearer ')) {
+      console.log('Unauthorized: Invalid token format');
+      client.disconnect();
+      // TODO : figure out why this breaks the server and doesnt send back to the client
+      //throw new WsException('Unauthorized: Invalid token format');
+    }
+
     const token = auth.split(' ')[1];
 
     let user;
     try {
       user = await this.authService.verifyToken(token);
     } catch (error) {
+      console.log(error);
       client.disconnect();
       return;
     }
@@ -85,8 +100,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() projectId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log(client['user'].userId);
-    console.log(Types.ObjectId.isValid(client['user'].userId));
     console.log(projectId);
     if (
       !(await this.projectsService.userInProject(
@@ -128,7 +141,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const messageResponse: ChatMessageResponseDto = {
       username: client['user'].username,
-      message: content,
+      content: content,
       timestamp: new Date(),
     };
 

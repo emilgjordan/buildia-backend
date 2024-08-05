@@ -43,6 +43,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     errorResponse = this.getErrorResponse(status, errorMessage, request);
+
     const errorLog = this.getErrorLog(errorResponse, request, exception);
     this.writeErrorLogToFile(errorLog);
     response.status(status).json(errorResponse);

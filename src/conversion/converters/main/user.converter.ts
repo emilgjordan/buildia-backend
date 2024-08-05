@@ -1,24 +1,22 @@
-import { EntityConverter } from './entity.converter';
-import { User } from '../../users/interfaces/user.interface';
+import { EntityConverter } from '../entity.converter';
+import { User } from '../../../users/interfaces/user.interface';
 import { UserDocument } from 'src/users/schemas/user.schema';
 import { UserResponseDto } from 'src/users/dto/output/user-response.dto';
 import { Types } from 'mongoose';
-import { InternalServerErrorException } from '@nestjs/common';
-import { ProjectConverter } from './project.converter';
-import { ConversionService } from '../conversion.service';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ProjectDocument } from 'src/projects/schemas/project.schema';
-import { Project } from 'src/projects/interfaces/project.interface';
-
+import { PlainProjectConverter } from '../plain/plain-project.converter';
+@Injectable()
 export class UserConverter extends EntityConverter<
   UserDocument,
   User,
   UserResponseDto
 > {
-  constructor(private readonly conversionService: ConversionService) {
+  constructor(private readonly plainProjectConverter: PlainProjectConverter) {
     super();
   }
   toEntity(userDocument: UserDocument): User {
-    const { _id, projects, __v, ...user } = userDocument.toObject();
+    const { _id, __v, ...user } = userDocument.toObject();
     let projectsNew;
 
     if (userDocument.projects.length === 0) {
@@ -32,8 +30,7 @@ export class UserConverter extends EntityConverter<
     } else if (
       userDocument.projects.every((project) => typeof project === 'object')
     ) {
-      projectsNew = this.conversionService.toEntities<ProjectDocument, Project>(
-        'Project',
+      projectsNew = this.plainProjectConverter.toEntities(
         userDocument.projects as ProjectDocument[],
       );
     } else {

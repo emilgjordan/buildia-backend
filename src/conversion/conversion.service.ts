@@ -23,7 +23,6 @@ export class ConversionService {
   }
 
   toEntity<Document, Entity>(name: string, document: Document): Entity {
-    console.log('in conversion service to Entity');
     return this.getConverter<Document, Entity, any>(name).toEntity(document);
   }
 

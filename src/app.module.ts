@@ -17,6 +17,7 @@ import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
 import { MessagesModule } from './messages/messages.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConversionModule } from './conversion/conversion.module';
+import { LikesModule } from './likes/likes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -40,6 +41,7 @@ import { ConversionModule } from './conversion/conversion.module';
     ProjectsModule,
     ChatModule,
     MessagesModule,
+    LikesModule,
     ConversionModule,
   ],
   controllers: [AppController],

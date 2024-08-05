@@ -11,6 +11,7 @@ import {
   Query,
   forwardRef,
   Inject,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/input/create-user.dto';
@@ -97,18 +98,14 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async updateUser(
     @Param('userId') targetUserId: string,
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<UserResponseDto> {
-    if (!Types.ObjectId.isValid(targetUserId)) {
-      throw new BadRequestException('Invalid user ID');
-    }
-    const shouldPopulate = populate === 'true';
     const updatedUser: User = await this.usersService.updateUser(
       targetUserId,
       updateUserDto,
-      shouldPopulate,
+      populate,
       currentUser.userId,
     );
     return this.conversionService.toResponseDto<User, UserResponseDto>(

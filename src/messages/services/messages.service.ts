@@ -9,7 +9,7 @@ import {
 import { MessagesRepository } from '../repositories/messages.repository';
 import { Message } from '../interfaces/message.interface';
 import { MessageDocument } from '../schemas/message.schema';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { UsersService } from 'src/users/services/users.service';
 import { ProjectsService } from 'src/projects/services/projects.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -67,18 +67,51 @@ export class MessagesService {
         'InternalCreateMessageDto requires property userId for user messages',
       );
     }
+
+    let newMessage;
+    let projectId = new Types.ObjectId(createMessageDto.projectId);
+
     if (createMessageDto.type === 'user') {
-      const userId = new Types.ObjectId(createMessageDto.userId);
-      const newMessage = { ...createMessageDto, user: userId };
+      let userId = new Types.ObjectId(createMessageDto.userId);
+      newMessage = { ...createMessageDto, user: userId, project: projectId };
+      console.log('creating message');
+      console.log(createMessageDto);
       const messageDocument = await this.messagesRepository.create(newMessage);
     } else if (createMessageDto.type === 'system') {
-      const newMessage = { ...createMessageDto };
+      const newMessage = { ...createMessageDto, project: projectId };
       const messageDocument = await this.messagesRepository.create(newMessage);
     }
   }
 
   @OnEvent('message.*')
   async handleChatNewMessageEvent(payload: InternalCreateMessageDto) {
+    console.log('handling chat new message event');
     await this.createMessage(payload, false);
+  }
+
+  @OnEvent('project.userJoined')
+  async handleProjectUserJoinedEvent(payload: {
+    userId: string;
+    projectId: string;
+  }) {
+    let createMessageDto: InternalCreateMessageDto = {
+      ...payload,
+      type: 'system',
+      content: `user ${payload.userId} joined this project`,
+    };
+    await this.createMessage(createMessageDto, false);
+  }
+
+  @OnEvent('project.joinRequest')
+  async handleProjectJoinRequestEvent(payload: {
+    userId: string;
+    projectId: string;
+  }) {
+    let createMessageDto: InternalCreateMessageDto = {
+      ...payload,
+      type: 'system',
+      content: `user ${payload.userId} requested to join this project`,
+    };
+    await this.createMessage(createMessageDto, false);
   }
 }
