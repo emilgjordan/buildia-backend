@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -47,6 +48,19 @@ export class LikesController {
     };
 
     return this.likesService.createLike(internalCreateLikeDto, populate);
+  }
+
+  @Delete(':likeId')
+  @UseGuards(JwtAuthGuard)
+  async removeLike(
+    @Param('likeId') likeId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<{ message: string }> {
+    if (!Types.ObjectId.isValid(likeId)) {
+      throw new BadRequestException('Invalid like ID');
+    }
+
+    return this.likesService.removeLike(likeId, currentUser.userId);
   }
 
   @Get()

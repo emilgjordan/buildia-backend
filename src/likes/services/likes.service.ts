@@ -96,4 +96,27 @@ export class LikesService {
       likeDocument,
     );
   }
+
+  async removeLike(
+    likeId: string,
+    currentUserId: string,
+  ): Promise<{ message: string }> {
+    const likeDocument = await this.likesRepository.findOne({
+      _id: likeId,
+    });
+    if (!likeDocument) {
+      throw new NotFoundException('Like not found');
+    }
+    if (likeDocument.user.toString() !== currentUserId) {
+      throw new UnauthorizedException('User not authorized to delete like');
+    }
+    const result = await this.likesRepository.deleteOne({ _id: likeId });
+    if (result.deletedCount === 0) {
+      throw new InternalServerErrorException('Like not deleted');
+    }
+
+    return {
+      message: `Like with ID '${likeId}' was deleted successfully.`,
+    };
+  }
 }
