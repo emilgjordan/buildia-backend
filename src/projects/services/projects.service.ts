@@ -37,67 +37,20 @@ export class ProjectsService {
     return !!projectDocument;
   }
 
-  async requestJoinProject(
-    projectId: string,
-    currentUserId: string,
-  ): Promise<void> {
+  async addUserToProject(userId: string, projectId: string): Promise<void> {
     const projectDocument = await this.projectsRepository.findOne({
       _id: projectId,
     });
     if (!projectDocument) {
       throw new NotFoundException('Project not found');
     }
-    if (
-      projectDocument.users
-        .map((user) => user.toString())
-        .includes(currentUserId)
-    ) {
+    if (projectDocument.users.map((user) => user.toString()).includes(userId)) {
       throw new ConflictException('User is already a member of this project');
     }
-
-    if (
-      projectDocument.joinRequests
-        .map((user) => user.toString())
-        .includes(currentUserId)
-    ) {
-      throw new ConflictException('User has already requested to join');
-    }
     await this.projectsRepository.updateOne(
       { _id: projectId },
-      { $push: { joinRequests: new Types.ObjectId(currentUserId) } },
+      { $push: { users: new Types.ObjectId(userId) } },
     );
-
-    this.eventEmitter.emit('project.joinRequest', {
-      userId: currentUserId,
-      projectId,
-    });
-  }
-
-  async approveJoinRequest(projectId: string, userId: string): Promise<void> {
-    const projectDocument = await this.projectsRepository.findOne({
-      _id: projectId,
-    });
-    if (!projectDocument) {
-      throw new NotFoundException('Project not found');
-    }
-
-    if (
-      !projectDocument.joinRequests
-        .map((user) => user.toString())
-        .includes(userId)
-    ) {
-      throw new ConflictException(
-        'User has not requested to join this project',
-      );
-    }
-    await this.projectsRepository.updateOne(
-      { _id: projectId },
-      {
-        $pull: { joinRequests: new Types.ObjectId(userId) },
-        $push: { users: new Types.ObjectId(userId) },
-      },
-    );
-    this.eventEmitter.emit('project.userJoined', { userId, projectId });
   }
 
   async userInProject(userId: string, projectId: string): Promise<boolean> {

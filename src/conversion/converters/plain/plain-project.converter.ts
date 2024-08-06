@@ -15,7 +15,6 @@ export class PlainProjectConverter extends EntityConverter<
     const { _id, __v, ...project } = projectDocument.toObject();
     let creatorNew;
     let usersNew;
-    let joinRequestsNew;
 
     //creator field
 
@@ -51,36 +50,11 @@ export class PlainProjectConverter extends EntityConverter<
       );
     }
 
-    //joinRequests field
-
-    if (projectDocument.joinRequests.length === 0) {
-      joinRequestsNew = [];
-    } else if (
-      projectDocument.joinRequests.every(
-        (user) => user instanceof Types.ObjectId,
-      )
-    ) {
-      joinRequestsNew = projectDocument.joinRequests.map((user) =>
-        user.toString(),
-      );
-    } else if (
-      projectDocument.joinRequests.every((user) => typeof user === 'object')
-    ) {
-      throw new InternalServerErrorException(
-        'Project with populated joinRequests cannot be converted with PlainProjectConverter',
-      );
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid project document joinRequests data',
-      );
-    }
-
     return {
       ...project,
       projectId: _id.toString(),
       creator: creatorNew,
       users: usersNew,
-      joinRequests: joinRequestsNew,
     };
   }
 

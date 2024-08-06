@@ -43,39 +43,6 @@ export class ProjectsController {
     );
   }
 
-  @Post(':projectId/join-request')
-  @UseGuards(JwtAuthGuard)
-  async requestToJoinProject(
-    @Param('projectId') projectId: string,
-    @CurrentUser() currentUser: User,
-  ): Promise<{ message: string }> {
-    if (!Types.ObjectId.isValid(projectId)) {
-      throw new BadRequestException('Invalid project ID');
-    }
-
-    await this.projectsService.requestJoinProject(
-      projectId,
-      currentUser.userId,
-    );
-    return { message: 'Request sent' };
-  }
-
-  @Post(':projectId/approve-join-request')
-  @UseGuards(JwtAuthGuard)
-  async approveJoinRequest(
-    @Param('projectId') projectId: string,
-    @Body('userId') userId: string,
-    @CurrentUser() currentUser: User,
-  ) {
-    if (!Types.ObjectId.isValid(projectId)) {
-      throw new BadRequestException('Invalid project ID');
-    }
-    if (!Types.ObjectId.isValid(userId)) {
-      throw new BadRequestException('Invalid user ID');
-    }
-    await this.projectsService.approveJoinRequest(projectId, userId);
-  }
-
   @Get()
   async getProjects(
     @Query('populate') populate: boolean,

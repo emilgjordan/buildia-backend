@@ -74,27 +74,22 @@ export class LikesService {
     //   project: projectId,
     // });
 
+    let like;
+
     if (populate) {
       await likeDocument.populate('project user');
     }
 
     try {
-      const like = this.conversionService.toEntity<LikeDocument, Like>(
+      like = this.conversionService.toEntity<LikeDocument, Like>(
         'Like',
         likeDocument,
       );
     } catch (error) {
       console.log(error);
     }
-    const like = this.conversionService.toEntity<LikeDocument, Like>(
-      'Like',
-      likeDocument,
-    );
 
-    return this.conversionService.toEntity<LikeDocument, Like>(
-      'Like',
-      likeDocument,
-    );
+    return like;
   }
 
   async removeLike(

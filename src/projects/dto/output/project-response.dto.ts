@@ -6,7 +6,6 @@ export class ProjectResponseDto {
   description: string;
   creator: string | UserResponseDto;
   users: string[] | UserResponseDto[];
-  joinRequests: string[] | UserResponseDto[];
   createdAt: Date;
   updatedAt: Date;
 }

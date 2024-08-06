@@ -21,13 +21,6 @@ export class ProjectSchemaDefinition {
   })
   users: Types.ObjectId[] | UserDocument[];
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    required: true,
-    default: [],
-  })
-  joinRequests: Types.ObjectId[] | UserDocument[];
-
   @Prop({ default: 0 })
   likes: number;
 
