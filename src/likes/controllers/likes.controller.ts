@@ -55,7 +55,7 @@ export class LikesController {
   async removeLike(
     @Param('likeId') likeId: string,
     @CurrentUser() currentUser: User,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string; likeId: string }> {
     if (!Types.ObjectId.isValid(likeId)) {
       throw new BadRequestException('Invalid like ID');
     }

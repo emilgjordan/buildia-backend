@@ -38,15 +38,16 @@ export class MessageConverter extends EntityConverter<
         'Invalid message document project data',
       );
     }
-
-    if (messageDocument.user instanceof Types.ObjectId) {
-      userNew = messageDocument.user.toString();
-    } else if (typeof messageDocument.user === 'object') {
-      userNew = this.plainUserConverter.toEntity(messageDocument.user);
-    } else {
-      throw new InternalServerErrorException(
-        'Invalid message document user data',
-      );
+    if (messageDocument.type === 'user') {
+      if (messageDocument.user instanceof Types.ObjectId) {
+        userNew = messageDocument.user.toString();
+      } else if (typeof messageDocument.user === 'object') {
+        userNew = this.plainUserConverter.toEntity(messageDocument.user);
+      } else {
+        throw new InternalServerErrorException(
+          'Invalid message document user data',
+        );
+      }
     }
 
     return {
