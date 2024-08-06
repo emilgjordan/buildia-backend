@@ -16,10 +16,14 @@ import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from 'src/users/interfaces/user.interface';
+import { ConversionService } from 'src/conversion/conversion.service';
 
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly conversionService: ConversionService,
+  ) {}
 
   @Get(':projectId')
   async getProjectById(
@@ -33,7 +37,10 @@ export class ProjectsController {
       projectId,
       populate,
     );
-    return this.projectsService.toProjectResponseDto(project);
+    return this.conversionService.toResponseDto<Project, ProjectResponseDto>(
+      'Project',
+      project,
+    );
   }
 
   @Post(':projectId/join-request')
@@ -71,16 +78,15 @@ export class ProjectsController {
 
   @Get()
   async getProjects(
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
   ): Promise<ProjectResponseDto[]> {
-    console.log('requesting projects');
-    const shouldPopulate = populate === 'true';
     const projects: Project[] = await this.projectsService.getProjects(
       {},
-      shouldPopulate,
+      populate,
     );
-    return projects.map((project) =>
-      this.projectsService.toProjectResponseDto(project),
+    return this.conversionService.toResponseDtos<Project, ProjectResponseDto>(
+      'Project',
+      projects,
     );
   }
 
@@ -88,15 +94,17 @@ export class ProjectsController {
   @UseGuards(JwtAuthGuard)
   async createProject(
     @Body() createProjectDto: CreateProjectDto,
-    @Query('populate') populate: string,
+    @Query('populate') populate: boolean,
     @CurrentUser() currentUser: User,
   ): Promise<ProjectResponseDto> {
-    const shouldPopulate = populate === 'true';
     const project: Project = await this.projectsService.createProject(
       createProjectDto,
-      shouldPopulate,
+      populate,
       currentUser.userId,
     );
-    return this.projectsService.toProjectResponseDto(project);
+    return this.conversionService.toResponseDto<Project, ProjectResponseDto>(
+      'Project',
+      project,
+    );
   }
 }

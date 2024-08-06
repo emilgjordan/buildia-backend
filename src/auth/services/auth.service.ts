@@ -18,7 +18,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<User | null> {
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.getUserByEmail(email, false);
 
     if (!user) {
@@ -27,7 +27,7 @@ export class AuthService {
 
     const passwordIsValid = await bcrypt.compare(password, user.hashedPassword);
     if (!passwordIsValid) {
-      throw new UnauthorizedException('Invalid password');
+      throw new UnauthorizedException('Incorrect password');
     }
     return user;
   }
