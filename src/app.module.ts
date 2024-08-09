@@ -10,7 +10,6 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ProjectsModule } from './projects/projects.module';
 import * as Joi from 'joi';
 import databaseConfig from './config/database.config';
-import jwtConfig from './config/jwt.config';
 import { ChatModule } from './chat/chat.module';
 import { WsExceptionsFilter } from './common/filters/ws-exceptions.filter';
 import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
@@ -18,13 +17,15 @@ import { MessagesModule } from './messages/messages.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConversionModule } from './conversion/conversion.module';
 import { LikesModule } from './likes/likes.module';
+import { JoinRequestsModule } from './join-requests/join-requests.module';
+import authConfig from './config/auth.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: `.${process.env.NODE_ENV || 'development'}.env`,
       isGlobal: true,
       cache: true,
-      load: [databaseConfig, jwtConfig],
+      load: [databaseConfig, authConfig],
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
@@ -42,6 +43,7 @@ import { LikesModule } from './likes/likes.module';
     ChatModule,
     MessagesModule,
     LikesModule,
+    JoinRequestsModule,
     ConversionModule,
   ],
   controllers: [AppController],

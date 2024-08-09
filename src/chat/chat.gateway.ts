@@ -38,11 +38,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   notifyJoinRequest(userId: string, projectId: string) {
-    //console.log('emmited user:request_join');
-    console.log('join request project id');
-    console.log(projectId);
-    console.log('join request user id');
-    console.log(userId);
     this.server
       .to(projectId)
       .emit('user:request_join', { projectId: projectId, userId: userId });
@@ -62,7 +57,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @UseFilters(WsExceptionsFilter)
   async handleConnection(client: Socket) {
     const auth = client.handshake.auth.token || client.handshake.headers.token;
-    console.log(auth);
     if (!auth) {
       console.log('Unauthorized: No token provided');
       client.disconnect();
@@ -100,7 +94,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() projectId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log(projectId);
     if (
       !(await this.projectsService.userInProject(
         client['user'].userId,

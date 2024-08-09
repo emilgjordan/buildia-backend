@@ -74,8 +74,6 @@ export class MessagesService {
     if (createMessageDto.type === 'user') {
       let userId = new Types.ObjectId(createMessageDto.userId);
       newMessage = { ...createMessageDto, user: userId, project: projectId };
-      console.log('creating message');
-      console.log(createMessageDto);
       const messageDocument = await this.messagesRepository.create(newMessage);
     } else if (createMessageDto.type === 'system') {
       const newMessage = { ...createMessageDto, project: projectId };
@@ -85,7 +83,6 @@ export class MessagesService {
 
   @OnEvent('message.*')
   async handleChatNewMessageEvent(payload: InternalCreateMessageDto) {
-    console.log('handling chat new message event');
     await this.createMessage(payload, false);
   }
 

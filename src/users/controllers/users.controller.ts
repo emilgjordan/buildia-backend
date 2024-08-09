@@ -40,7 +40,6 @@ export class UsersController {
     @CurrentUser() currentUser: User,
     @Query('populate') populate: boolean,
   ): Promise<UserResponseDto> {
-    console.log('hi');
     return this.usersService.getUserById(currentUser.userId, populate);
   }
 
@@ -74,26 +73,6 @@ export class UsersController {
     );
   }
 
-  @Post()
-  async createUser(
-    @Body() createUserDto: CreateUserDto,
-    @Query('populate') populate: string,
-  ): Promise<CreateUserResponseDto> {
-    const shouldPopulate = populate === 'true';
-    const user: User = await this.usersService.createUser(
-      createUserDto,
-      shouldPopulate,
-    );
-    const access_token = await this.authService.generateAccessToken(user);
-
-    return {
-      user: this.conversionService.toResponseDto<User, UserResponseDto>(
-        'User',
-        user,
-      ),
-      access_token: access_token,
-    };
-  }
   @Patch(':userId')
   @UseGuards(JwtAuthGuard)
   async updateUser(

@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   UnauthorizedException,
@@ -34,22 +35,38 @@ export class JoinRequestsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async createJoinRequest(
-    @Body() createJoinRequestDto: CreateJoinRequestDto,
     @Query('populate') populate: boolean,
+    @Param('projectId') projectId: string,
     @CurrentUser() currentUser: User,
   ) {
-    if (!this.projectsService.projectExists(createJoinRequestDto.projectId)) {
+    if (!this.projectsService.projectExists(projectId)) {
       throw new NotFoundException('Project not found');
     }
 
     const internalCreateJoinRequestDto = {
-      projectId: createJoinRequestDto.projectId,
+      projectId: projectId,
       userId: currentUser.userId,
     };
 
     return this.joinRequestsService.createJoinRequest(
       internalCreateJoinRequestDto,
       populate,
+    );
+  }
+
+  @Patch(':joinRequestId/approve')
+  @UseGuards(JwtAuthGuard)
+  async approveJoinRequest(
+    @Param('joinRequestId') joinRequestId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<{ message: string }> {
+    if (!Types.ObjectId.isValid(joinRequestId)) {
+      throw new BadRequestException('Invalid joinrequest ID');
+    }
+
+    return this.joinRequestsService.approveJoinRequest(
+      joinRequestId,
+      currentUser.userId,
     );
   }
 

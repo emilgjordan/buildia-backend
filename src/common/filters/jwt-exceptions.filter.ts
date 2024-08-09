@@ -12,7 +12,6 @@ export class JwtExceptionFilter implements ExceptionFilter {
   catch(exception: TokenExpiredError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    console.log('in jwt exception filter');
 
     response.status(HttpStatus.UNAUTHORIZED).json({
       statusCode: HttpStatus.UNAUTHORIZED,

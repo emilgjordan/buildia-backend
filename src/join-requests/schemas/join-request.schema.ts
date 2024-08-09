@@ -14,6 +14,11 @@ export class JoinRequestSchemaDefinition {
     ref: 'Project',
     required: true,
   })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    required: true,
+  })
   project: Types.ObjectId | ProjectDocument;
 
   @Prop({ default: false })

@@ -25,7 +25,7 @@ export class UsersService {
     private conversionService: ConversionService,
   ) {}
 
-  async getUserById(userId: string, populate: boolean): Promise<User> {
+  async getUserById(userId: string, populate: boolean = false): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       _id: userId,
     });
@@ -43,11 +43,13 @@ export class UsersService {
         );
   }
 
-  async getUserByUsername(username: string, populate: boolean): Promise<User> {
+  async getUserByUsername(
+    username: string,
+    populate: boolean = false,
+  ): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       username: username,
     });
-    console.log(populate);
     if (!userDocument) {
       throw new NotFoundException('User not found');
     }
@@ -62,7 +64,10 @@ export class UsersService {
         );
   }
 
-  async getUserByEmail(email: string, populate: boolean): Promise<User> {
+  async getUserByEmail(
+    email: string,
+    populate: boolean = false,
+  ): Promise<User> {
     const userDocument: UserDocument = await this.userRepository.findOne({
       email: email,
     });
@@ -82,7 +87,7 @@ export class UsersService {
 
   async getUsers(
     userFilterQuery: FilterQuery<User>,
-    populate: boolean,
+    populate: boolean = false,
   ): Promise<User[]> {
     const userDocuments: UserDocument[] =
       await this.userRepository.findMany(userFilterQuery);
@@ -104,7 +109,7 @@ export class UsersService {
 
   async createUser(
     createUserDto: CreateUserDto,
-    populate: boolean,
+    populate: boolean = false,
   ): Promise<User> {
     const { username, email } = createUserDto;
     const userExists = await this.userRepository.findOne({
@@ -128,21 +133,18 @@ export class UsersService {
     const createdUserDocument: UserDocument =
       await this.userRepository.create(newUser);
 
-    return populate
-      ? this.conversionService.toEntity<UserDocument, User>(
-          'User',
-          await createdUserDocument.populate('projects'),
-        )
-      : this.conversionService.toEntity<UserDocument, User>(
-          'User',
-          createdUserDocument,
-        );
+    return this.conversionService.toEntity<UserDocument, User>(
+      'User',
+      populate
+        ? await createdUserDocument.populate('projects')
+        : createdUserDocument,
+    );
   }
 
   async updateUser(
     targetUserId: string,
     updateUserDto: UpdateUserDto,
-    populate: boolean,
+    populate: boolean = false,
     currentUserId: string,
   ): Promise<User> {
     if (!Types.ObjectId.isValid(targetUserId)) {

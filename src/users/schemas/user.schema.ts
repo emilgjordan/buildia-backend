@@ -24,7 +24,7 @@ export class UserSchemaDefinition {
   })
   email: string;
 
-  @Prop({ required: true, lowercase: true, index: true })
+  @Prop({ required: true, lowercase: true, index: true, unique: true })
   username: string;
 
   @Prop({ required: true })

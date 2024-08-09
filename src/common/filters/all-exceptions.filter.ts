@@ -40,6 +40,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorMessage = 'Internal server error';
+
+      throw exception;
     }
 
     errorResponse = this.getErrorResponse(status, errorMessage, request);

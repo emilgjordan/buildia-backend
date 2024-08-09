@@ -25,36 +25,39 @@ export class JoinRequestConverter extends EntityConverter<
     super();
   }
   toEntity(joinRequestDocument: JoinRequestDocument): JoinRequest {
-    const { _id, __v, user, project, ...joinRequest } =
-      joinRequestDocument.toObject();
+    const { _id, __v, ...joinRequest } = joinRequestDocument.toObject();
     let projectNew;
     let userNew;
 
-    if (project instanceof Types.ObjectId) {
-      projectNew = project.toString();
-    } else if (typeof project === 'object') {
-      projectNew = this.plainProjectConverter.toEntity(project);
+    if (joinRequestDocument.project instanceof Types.ObjectId) {
+      projectNew = joinRequestDocument.project.toString();
+    } else if (typeof joinRequestDocument.project === 'object') {
+      projectNew = this.plainProjectConverter.toEntity(
+        joinRequestDocument.project,
+      );
     } else {
       throw new InternalServerErrorException(
         'Invalid joinrequest document project data',
       );
     }
 
-    if (user instanceof Types.ObjectId) {
-      userNew = user.toString();
-    } else if (typeof user === 'object') {
-      userNew = this.plainUserConverter.toEntity(user);
+    if (joinRequestDocument.user instanceof Types.ObjectId) {
+      userNew = joinRequestDocument.user.toString();
+    } else if (typeof joinRequestDocument.user === 'object') {
+      userNew = this.plainUserConverter.toEntity(joinRequestDocument.user);
     } else {
       throw new InternalServerErrorException(
         'Invalid joinrequest document user data',
       );
     }
 
+    const { user, project, ...rest } = joinRequest;
+
     return {
       joinRequestId: _id.toString(),
       project: projectNew,
       user: userNew,
-      ...joinRequest,
+      ...rest,
     };
   }
   toResponseDto(joinrequest: JoinRequest): JoinRequestResponseDto {

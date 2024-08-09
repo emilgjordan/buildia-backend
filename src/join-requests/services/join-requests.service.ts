@@ -95,12 +95,28 @@ export class JoinRequestsService {
     return joinRequest;
   }
 
-  async approveJoinRequest(joinRequestId: string): Promise<void> {
+  async approveJoinRequest(
+    joinRequestId: string,
+    currentUserId: string,
+  ): Promise<{ message: string }> {
     const joinRequestDocument = await this.joinRequestsRepository.findOne({
       _id: joinRequestId,
     });
     if (!joinRequestDocument) {
       throw new NotFoundException('Join Request not found');
+    }
+    if (joinRequestDocument.approved) {
+      throw new BadRequestException('Join Request already approved');
+    }
+    const project = await this.projectsService.getProjectById(
+      joinRequestDocument.project.toString(),
+      false,
+    );
+
+    if (!this.projectsService.userInProject(currentUserId, project.projectId)) {
+      throw new UnauthorizedException(
+        'User not authorized to approve join request',
+      );
     }
 
     await this.joinRequestsRepository.updateOne(
@@ -115,6 +131,8 @@ export class JoinRequestsService {
       joinRequestDocument.user.toString(),
       joinRequestDocument.project.toString(),
     );
+
+    return { message: 'Join Request approved successfully' };
 
     // this.eventEmitter.emit('project.userJoined', { userId, projectId });
   }

@@ -78,7 +78,7 @@ export class ProjectsService {
     if (populate) {
       return this.conversionService.toEntity<ProjectDocument, Project>(
         'Project',
-        await projectDocument.populate('creator users joinRequests'),
+        await projectDocument.populate('creator users'),
       );
     }
     return this.conversionService.toEntity<ProjectDocument, Project>(
@@ -96,9 +96,8 @@ export class ProjectsService {
     if (populate) {
       return await Promise.all(
         projectDocuments.map(async (projectDocument) => {
-          const populatedProject = await projectDocument.populate(
-            'creator users joinRequests',
-          );
+          const populatedProject =
+            await projectDocument.populate('creator users');
           return this.conversionService.toEntity<ProjectDocument, Project>(
             'Project',
             populatedProject,
@@ -135,7 +134,7 @@ export class ProjectsService {
     return populate
       ? this.conversionService.toEntity<ProjectDocument, Project>(
           'Project',
-          await projectDocument.populate('creator users joinRequests'),
+          await projectDocument.populate('creator users'),
         )
       : this.conversionService.toEntity<ProjectDocument, Project>(
           'Project',
@@ -167,7 +166,7 @@ export class ProjectsService {
     if (populate) {
       return this.conversionService.toEntity<ProjectDocument, Project>(
         'Project',
-        await updatedProjectDocument.populate('creator users joinRequests'),
+        await updatedProjectDocument.populate('creator users'),
       );
     }
     return this.conversionService.toEntity<ProjectDocument, Project>(

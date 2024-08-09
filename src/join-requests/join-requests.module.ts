@@ -11,7 +11,11 @@ import { JoinRequestsService } from './services/join-requests.service';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: 'JoinRequest', schema: JoinRequestSchema },
+      {
+        name: 'JoinRequest',
+        schema: JoinRequestSchema,
+        collection: 'join_requests',
+      },
     ]),
     AuthModule,
     ProjectsModule,

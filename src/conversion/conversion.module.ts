@@ -9,6 +9,7 @@ import { PlainMessageConverter } from './converters/plain/plain-message.converte
 import { ConversionConfig } from './conversion.config';
 import { LikeConverter } from './converters/main/like.converter';
 import { PlainLikeConverter } from './converters/plain/plain-like.converter';
+import { JoinRequestConverter } from './converters/main/join-request.converter';
 
 @Module({
   providers: [
@@ -19,6 +20,7 @@ import { PlainLikeConverter } from './converters/plain/plain-like.converter';
     MessageConverter,
     LikeConverter,
     PlainLikeConverter,
+    JoinRequestConverter,
     PlainMessageConverter,
     ConversionService,
     ConversionConfig,

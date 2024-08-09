@@ -4,6 +4,7 @@ import { UserConverter } from './converters/main/user.converter';
 import { ProjectConverter } from './converters/main/project.converter';
 import { MessageConverter } from './converters/main/message.converter';
 import { LikeConverter } from './converters/main/like.converter';
+import { JoinRequestConverter } from './converters/main/join-request.converter';
 
 @Injectable()
 export class ConversionConfig {
@@ -13,6 +14,7 @@ export class ConversionConfig {
     private readonly projectConverter: ProjectConverter,
     private readonly messageConverter: MessageConverter,
     private readonly likeConverter: LikeConverter,
+    private readonly joinRequestConverter: JoinRequestConverter,
   ) {}
 
   onModuleInit() {
@@ -24,5 +26,9 @@ export class ConversionConfig {
     this.conversionService.registerConverter('Project', this.projectConverter);
     this.conversionService.registerConverter('Message', this.messageConverter);
     this.conversionService.registerConverter('Like', this.likeConverter);
+    this.conversionService.registerConverter(
+      'JoinRequest',
+      this.joinRequestConverter,
+    );
   }
 }
