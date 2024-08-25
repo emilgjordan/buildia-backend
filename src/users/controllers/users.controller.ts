@@ -43,15 +43,25 @@ export class UsersController {
     return this.usersService.getUserById(currentUser.userId, populate);
   }
 
-  @Get(':userId')
+  @Get()
   async getUser(
-    @Param('userId') userId: string,
+    @Query('userId') userId: string,
+    @Query('username') username: string,
     @Query('populate') populate: boolean,
   ): Promise<UserResponseDto> {
-    if (!Types.ObjectId.isValid(userId)) {
-      throw new BadRequestException('Invalid user ID');
+    let user: User;
+    if (userId) {
+      user = await this.usersService.getUserById(userId, populate);
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new BadRequestException('Invalid user ID');
+      }
+    } else if (username) {
+      user = await this.usersService.getUserByUsername(username, populate);
+    } else {
+      throw new BadRequestException(
+        'Either username or userId must be provided',
+      );
     }
-    const user: User = await this.usersService.getUserById(userId, populate);
     return this.conversionService.toResponseDto<User, UserResponseDto>(
       'User',
       user,

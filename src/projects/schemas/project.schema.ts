@@ -24,6 +24,9 @@ export class ProjectSchemaDefinition {
   @Prop({ default: 0 })
   likes: number;
 
+  @Prop({ default: true })
+  public: boolean;
+
   @Prop({ default: () => Date.now() })
   createdAt: Date;
 
