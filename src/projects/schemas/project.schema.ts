@@ -21,6 +21,9 @@ export class ProjectSchemaDefinition {
   })
   users: Types.ObjectId[] | UserDocument[];
 
+  @Prop({ default: [] })
+  tags: string[];
+
   @Prop({ default: 0 })
   likes: number;
 

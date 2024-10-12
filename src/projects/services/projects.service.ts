@@ -1,30 +1,24 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
-  forwardRef,
 } from '@nestjs/common';
 import { Project } from '../interfaces/project.interface';
-import { ProjectResponseDto } from '../dto/output/project-response.dto';
-import {
-  ProjectDocument,
-  ProjectSchemaDefinition,
-} from '../schemas/project.schema';
-import { Types } from 'mongoose';
-import { UsersService } from '../../users/services/users.service';
+import { ProjectDocument } from '../schemas/project.schema';
+import { Model, Types } from 'mongoose';
 import { ProjectsRepository } from '../repositories/projects.repository';
 import { CreateProjectDto } from '../dto/input/create-project.dto';
 import { UpdateProjectDto } from '../dto/input/update-project.dto';
-import { ChatGateway } from 'src/chat/chat.gateway';
 import { ConversionService } from '../../conversion/conversion.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class ProjectsService {
   constructor(
+    @InjectModel('Project') private projectModel: Model<ProjectDocument>,
     private readonly projectsRepository: ProjectsRepository,
     private readonly conversionService: ConversionService,
     private readonly eventEmitter: EventEmitter2,
@@ -88,28 +82,87 @@ export class ProjectsService {
   }
 
   async getProjects(
-    projectFilterQuery: any,
-    populate: boolean,
-  ): Promise<Project[]> {
-    const projectDocuments =
-      await this.projectsRepository.findMany(projectFilterQuery);
-    if (populate) {
-      return await Promise.all(
-        projectDocuments.map(async (projectDocument) => {
-          const populatedProject =
-            await projectDocument.populate('creator users');
-          return this.conversionService.toEntity<ProjectDocument, Project>(
-            'Project',
-            populatedProject,
-          );
-        }),
-      );
-    } else {
-      return this.conversionService.toEntities<ProjectDocument, Project>(
-        'Project',
-        projectDocuments,
-      );
+    search?: string,
+    tags?: string[],
+    limit: number = 10,
+    skip: number = 0,
+    populate: boolean = false,
+  ): Promise<{ projects: Project[]; total: number }> {
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: `^${search}`, $options: 'i' } },
+        { $text: { $search: search } },
+      ];
+
+      if (tags && tags.length > 0) {
+        query.skills = { $in: tags };
+      }
     }
+
+    const total = await this.projectModel.countDocuments(query);
+
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const searchResults = await this.projectModel
+      .find(query)
+      .limit(limit)
+      .skip(skip)
+      .exec();
+
+    const projects = populate
+      ? await Promise.all(
+          searchResults.map(async (projectDocument) => {
+            const populatedProject =
+              await projectDocument.populate('creator users');
+            return this.conversionService.toEntity<ProjectDocument, Project>(
+              'Project',
+              populatedProject,
+            );
+          }),
+        )
+      : this.conversionService.toEntities<ProjectDocument, Project>(
+          'Project',
+          searchResults,
+        );
+
+    return { projects, total };
+  }
+
+  async getProjectsByCreatorId(
+    creatorId: string,
+    limit: number = 10,
+    skip: number = 0,
+    populate: boolean = false,
+  ): Promise<{ projects: Project[]; total: number }> {
+    const query = { creator: creatorId };
+
+    const projectDocuments = await this.projectModel
+      .find(query)
+      .limit(limit)
+      .skip(skip)
+      .exec();
+
+    const total = await this.projectModel.countDocuments(query);
+
+    const projects = populate
+      ? await Promise.all(
+          projectDocuments.map(async (projectDocument) => {
+            const populatedProject =
+              await projectDocument.populate('creator users');
+            return this.conversionService.toEntity<ProjectDocument, Project>(
+              'Project',
+              populatedProject,
+            );
+          }),
+        )
+      : this.conversionService.toEntities<ProjectDocument, Project>(
+          'Project',
+          projectDocuments,
+        );
+
+    return { projects, total };
   }
 
   async createProject(

@@ -9,7 +9,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { UsersRepository } from '../repositories/users.repository';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import { UserDocument } from '../schemas/user.schema';
 import { User } from '../interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
@@ -17,12 +17,14 @@ import { CreateUserDto } from '../dto/input/create-user.dto';
 import { ConversionService } from '../../conversion/conversion.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UpdateUserDto } from '../dto/input/update-user.dto';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class UsersService {
   constructor(
     private userRepository: UsersRepository,
     private conversionService: ConversionService,
+    @InjectModel('User') private userModel: Model<UserDocument>,
   ) {}
 
   async getUserById(userId: string, populate: boolean = false): Promise<User> {
@@ -86,14 +88,41 @@ export class UsersService {
   }
 
   async getUsers(
-    userFilterQuery: FilterQuery<User>,
+    search: string,
+    skills: string[],
+    limit: number,
+    skip: number,
     populate: boolean = false,
-  ): Promise<User[]> {
-    const userDocuments: UserDocument[] =
-      await this.userRepository.findMany(userFilterQuery);
-    return populate
-      ? Promise.all(
-          userDocuments.map(async (userDocument) => {
+  ): Promise<{ users: User[]; total: number }> {
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: `^${search}`, $options: 'i' } },
+        { lastName: { $regex: `^${search}`, $options: 'i' } },
+        { username: { $regex: `^${search}`, $options: 'i' } },
+        { email: { $regex: `${search}`, $options: 'i' } },
+        { $text: { $search: search } },
+      ];
+    }
+
+    if (skills && skills.length > 0) {
+      query.skills = { $in: skills };
+    }
+
+    const total = await this.userModel.countDocuments(query);
+
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const searchResults = await this.userModel
+      .find(query)
+      .limit(limit)
+      .skip(skip)
+      .exec();
+
+    const users = populate
+      ? await Promise.all(
+          searchResults.map(async (userDocument) => {
             const populatedUser = await userDocument.populate('projects');
             return this.conversionService.toEntity<UserDocument, User>(
               'User',
@@ -103,8 +132,10 @@ export class UsersService {
         )
       : this.conversionService.toEntities<UserDocument, User>(
           'User',
-          userDocuments,
+          searchResults,
         );
+
+    return { users, total };
   }
 
   async createUser(

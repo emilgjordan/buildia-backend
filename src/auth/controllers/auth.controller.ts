@@ -36,8 +36,8 @@ export class AuthController {
       req.user,
     );
 
-    console.log('accessToken ', accessToken);
-    console.log('refreshToken ', refreshToken);
+    // console.log('accessToken ', accessToken);
+    // console.log('refreshToken ', refreshToken);
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 

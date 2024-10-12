@@ -27,17 +27,29 @@ export class LikesService {
     private readonly conversionService: ConversionService,
   ) {}
 
-  async getLikesByProject(
+  async getLikeCount(projectId: string) {
+    return 10;
+  }
+
+  async getLikes(
     projectId: string,
-    populate: boolean,
+    userId?: string,
+    limit: number = 10,
+    skip: number = 0,
+    populate: boolean = false,
   ): Promise<Like[]> {
     const project = await this.projectsService.getProjectById(projectId, false);
     if (!project) {
       throw new InternalServerErrorException('Project not found');
     }
-    const likeDocuments = await this.likesRepository.findMany({
-      project: projectId,
-    });
+    const likeDocuments = await this.likesRepository.findMany(
+      {
+        project: projectId,
+        user: userId,
+      },
+      limit,
+      skip,
+    );
     if (populate) {
       return await Promise.all(
         likeDocuments.map(async (likeDocument) => {

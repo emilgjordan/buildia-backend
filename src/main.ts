@@ -10,11 +10,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const PORT = configService.get<number>('PORT');
 
-  console.log(configService.get('jwt.signOptions').expiresIn);
+  // console.log(configService.get('jwt.signOptions').expiresIn);
 
   app.enableCors({
     //    origin: ['http://172.20.10.10:5500', 'http://0.0.0.0:5500'],
-    origin: 'http://localhost:5173',
+    // origin: 'http://localhost:5173',
+    origin: '*',
     methods: 'GET, PATCH, PUT, DELETE',
     allowedHeaders: 'Content-Type, Authorization, X-Requested-With',
     credentials: true,
@@ -33,7 +34,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  await app.listen(PORT, () => {
+  await app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
   });
 }

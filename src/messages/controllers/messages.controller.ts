@@ -21,7 +21,7 @@ import { Types } from 'mongoose';
 import { Message } from '../interfaces/message.interface';
 import { ConversionService } from '../../conversion/conversion.service';
 
-@Controller('projects/:projectId/messages')
+@Controller('messages')
 export class MessagesController {
   constructor(
     private readonly messagesService: MessagesService,
@@ -54,10 +54,15 @@ export class MessagesController {
   @Get()
   @UseGuards(JwtAuthGuard)
   async getMessagesByProject(
-    @Param('projectId') projectId: string,
+    @Query('projectId') projectId: string,
+    @Query('limit') limit: number,
+    @Query('skip') skip: number,
     @Query('populate') populate: boolean,
     @CurrentUser() currentUser: User,
   ): Promise<MessageResponseDto[]> {
+    if (!projectId) {
+      throw new BadRequestException('Must provide a project ID');
+    }
     if (!Types.ObjectId.isValid(projectId)) {
       throw new BadRequestException('Invalid project ID');
     }
@@ -69,6 +74,8 @@ export class MessagesController {
     }
     const messages: Message[] = await this.messagesService.getMessagesByProject(
       projectId,
+      limit,
+      skip,
       populate,
     );
     return this.conversionService.toResponseDtos<Message, MessageResponseDto>(

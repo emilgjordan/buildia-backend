@@ -19,6 +19,7 @@ import { Types } from 'mongoose';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ChatMessageResponseDto } from './dto/output/chat-message-response.dto';
 import { InternalCreateMessageDto } from 'src/messages/dto/input/internal-create-message.dto';
+import { first } from 'rxjs';
 
 @UseFilters(new WsExceptionsFilter())
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
@@ -33,7 +34,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @OnEvent('project.joinRequest')
   handleProjectJoinRequestEvent(payload) {
-    console.log('emmited user:request_join');
+    // console.log('emmited user:request_join');
     this.notifyJoinRequest(payload.userId, payload.projectId);
   }
 
@@ -81,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    console.log(`Client connected: ${client.id}`);
+    console.log(`Client connected: ${client.id} i.e. ${user.username}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -132,8 +133,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new WsException('Unauthorized: User not in project');
     }
 
+    console.log(`${client['user'].username} sent "${content}"`);
+
     const messageResponse: ChatMessageResponseDto = {
-      username: client['user'].username,
+      user: {
+        userId: client['user'].userId,
+        username: client['user'].username,
+        firstName: client['user'].firstName,
+        lastName: client['user'].lastName,
+      },
       content: content,
       timestamp: new Date(),
     };

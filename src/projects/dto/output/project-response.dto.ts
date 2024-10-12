@@ -6,6 +6,7 @@ export class ProjectResponseDto {
   description: string;
   creator: string | UserResponseDto;
   users: string[] | UserResponseDto[];
+  tags: string[];
   public: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -6,6 +6,7 @@ export interface Project {
   description: string;
   creator: string | User;
   users: string[] | User[];
+  tags: string[];
   likes: number;
   public: boolean;
   createdAt: Date;

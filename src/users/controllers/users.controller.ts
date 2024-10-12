@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Patch,
   Delete,
   Param,
@@ -9,28 +8,22 @@ import {
   UseGuards,
   BadRequestException,
   Query,
-  forwardRef,
-  Inject,
-  UnauthorizedException,
+  ParseBoolPipe,
+  ParseIntPipe,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
-import { CreateUserDto } from '../dto/input/create-user.dto';
 import { User } from '../interfaces/user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UpdateUserDto } from '../dto/input/update-user.dto';
 import { UserResponseDto } from '../dto/output/user-response.dto';
-import { GetUsersFilterDto } from '../dto/input/get-users-filter.dto';
-import { AuthService } from '../../auth/services/auth.service';
-import { CreateUserResponseDto } from '../dto/output/create-user-response.dto';
 import { Types } from 'mongoose';
 import { ConversionService } from '../../conversion/conversion.service';
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    @Inject(forwardRef(() => AuthService))
-    private readonly authService: AuthService,
     private readonly conversionService: ConversionService,
   ) {}
 
@@ -38,30 +31,23 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async getCurrentUser(
     @CurrentUser() currentUser: User,
-    @Query('populate') populate: boolean,
+    @Query('populate', ParseBoolPipe) populate: boolean,
   ): Promise<UserResponseDto> {
     return this.usersService.getUserById(currentUser.userId, populate);
   }
 
-  @Get()
+  @Get(':userId')
   async getUser(
-    @Query('userId') userId: string,
-    @Query('username') username: string,
+    @Param('userId') userId: string,
     @Query('populate') populate: boolean,
   ): Promise<UserResponseDto> {
-    let user: User;
-    if (userId) {
-      user = await this.usersService.getUserById(userId, populate);
-      if (!Types.ObjectId.isValid(userId)) {
-        throw new BadRequestException('Invalid user ID');
-      }
-    } else if (username) {
-      user = await this.usersService.getUserByUsername(username, populate);
-    } else {
-      throw new BadRequestException(
-        'Either username or userId must be provided',
-      );
+    console.log(populate);
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
     }
+
+    const user = await this.usersService.getUserById(userId, populate);
+
     return this.conversionService.toResponseDto<User, UserResponseDto>(
       'User',
       user,
@@ -70,17 +56,49 @@ export class UsersController {
 
   @Get()
   async getUsers(
-    @Body() userFilterQuery: GetUsersFilterDto,
+    @Query('search') search: string,
+    @Query('username') username: string,
+    @Query('email') email: string,
+    @Query('skills') skills: string[],
+    @Query('limit') limit: number,
+    @Query('skip') skip: number,
     @Query('populate') populate: boolean,
-  ): Promise<UserResponseDto[]> {
-    const users: User[] = await this.usersService.getUsers(
-      userFilterQuery,
+  ): Promise<UserResponseDto | { users: UserResponseDto[]; total: number }> {
+    if (username) {
+      const user = await this.usersService.getUserByUsername(username);
+      return this.conversionService.toResponseDto<User, UserResponseDto>(
+        'User',
+        user,
+      );
+    }
+
+    if (email) {
+      const user = await this.usersService.getUserByEmail(email);
+      return this.conversionService.toResponseDto<User, UserResponseDto>(
+        'User',
+        user,
+      );
+    }
+    console.log(skip);
+    if (skip < 0) {
+      throw new BadRequestException('Skip must be a positive number');
+    }
+
+    const result = await this.usersService.getUsers(
+      search,
+      skills,
+      limit,
+      skip,
       populate,
     );
-    return this.conversionService.toResponseDtos<User, UserResponseDto>(
-      'User',
-      users,
-    );
+
+    return {
+      users: this.conversionService.toResponseDtos<User, UserResponseDto>(
+        'User',
+        result.users,
+      ),
+      total: result.total,
+    };
   }
 
   @Patch(':userId')

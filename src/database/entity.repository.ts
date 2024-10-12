@@ -12,8 +12,8 @@ export abstract class EntityRepository<T extends Document> {
     }
   }
 
-  async findMany(entityFilterQuery: FilterQuery<T>): Promise<T[]> {
-    return this.entityModel.find(entityFilterQuery).exec();
+  async findMany(query: any, limit: number, skip: number): Promise<T[]> {
+    return this.entityModel.find(query).skip(skip).limit(limit).exec();
   }
 
   async create(createEntityData: Partial<T>): Promise<T> {

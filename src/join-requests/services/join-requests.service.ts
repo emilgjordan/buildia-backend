@@ -30,15 +30,21 @@ export class JoinRequestsService {
 
   async getJoinRequestsByProject(
     projectId: string,
+    limit: number = 10,
+    skip: number = 0,
     populate: boolean,
   ): Promise<JoinRequest[]> {
     const project = await this.projectsService.getProjectById(projectId, false);
     if (!project) {
       throw new InternalServerErrorException('Project not found');
     }
-    const joinRequestDocuments = await this.joinRequestsRepository.findMany({
-      project: projectId,
-    });
+    const joinRequestDocuments = await this.joinRequestsRepository.findMany(
+      {
+        project: projectId,
+      },
+      limit,
+      skip,
+    );
     if (populate) {
       return await Promise.all(
         joinRequestDocuments.map(async (joinrequestDocument) => {

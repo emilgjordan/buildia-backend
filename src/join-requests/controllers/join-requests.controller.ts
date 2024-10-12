@@ -6,6 +6,8 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseBoolPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -24,7 +26,7 @@ import { Types } from 'mongoose';
 import { JoinRequest } from '../interfaces/join-request.interface';
 import { ConversionService } from '../../conversion/conversion.service';
 
-@Controller('projects/:projectId/join-requests')
+@Controller('join-requests')
 export class JoinRequestsController {
   constructor(
     private readonly joinRequestsService: JoinRequestsService,
@@ -35,10 +37,13 @@ export class JoinRequestsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async createJoinRequest(
+    @Query('projectId') projectId: string,
     @Query('populate') populate: boolean,
-    @Param('projectId') projectId: string,
     @CurrentUser() currentUser: User,
   ) {
+    if (!projectId) {
+      throw new BadRequestException('Must provide Project ID');
+    }
     if (!this.projectsService.projectExists(projectId)) {
       throw new NotFoundException('Project not found');
     }
@@ -88,23 +93,30 @@ export class JoinRequestsController {
 
   @Get()
   async getJoinRequestsByProject(
-    @Param('projectId') projectId: string,
-    @Query('populate') populate: boolean,
+    @Query('projectId') projectId: string,
+    @Query('limit', ParseIntPipe) limit: number,
+    @Query('skip', ParseIntPipe) skip: number,
+    @Query('populate', ParseBoolPipe) populate: boolean,
   ): Promise<JoinRequestResponseDto[]> {
+    if (!projectId) {
+      throw new BadRequestException('Must provide project ID');
+    }
     if (!Types.ObjectId.isValid(projectId)) {
       throw new BadRequestException('Invalid project ID');
     }
     if (!this.projectsService.projectExists(projectId)) {
       throw new NotFoundException('Project not found');
     }
-    const joinrequests: JoinRequest[] =
+    const joinRequests: JoinRequest[] =
       await this.joinRequestsService.getJoinRequestsByProject(
         projectId,
+        limit,
+        skip,
         populate,
       );
     return this.conversionService.toResponseDtos<
       JoinRequest,
       JoinRequestResponseDto
-    >('JoinRequest', joinrequests);
+    >('JoinRequest', joinRequests);
   }
 }

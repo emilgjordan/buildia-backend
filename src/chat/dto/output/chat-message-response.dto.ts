@@ -1,5 +1,10 @@
 export class ChatMessageResponseDto {
-  username: string;
+  user: {
+    userId: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+  };
   content: string;
   timestamp: Date;
 }

@@ -28,15 +28,22 @@ export class MessagesService {
 
   async getMessagesByProject(
     projectId: string,
-    populate: boolean,
+    limit: number = 20,
+    skip: number = 0,
+    populate: boolean = false,
   ): Promise<Message[]> {
     const project = await this.projectsService.getProjectById(projectId, false);
     if (!project) {
       throw new InternalServerErrorException('Project not found');
     }
-    const messageDocuments = await this.messagesRepository.findMany({
-      project: projectId,
-    });
+    const messageDocuments = await this.messagesRepository.findMany(
+      {
+        project: projectId,
+      },
+      limit,
+      skip,
+    );
+
     if (populate) {
       return await Promise.all(
         messageDocuments.map(async (messageDocument) => {

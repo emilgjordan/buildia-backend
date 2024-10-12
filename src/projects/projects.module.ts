@@ -6,12 +6,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProjectSchema } from './schemas/project.schema';
 import { AuthModule } from '../auth/auth.module';
 import { ConversionModule } from '../conversion/conversion.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Project', schema: ProjectSchema }]),
     AuthModule,
     ConversionModule,
+    UsersModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService, ProjectsRepository],
