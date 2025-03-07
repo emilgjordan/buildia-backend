@@ -25,7 +25,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
     private readonly conversionService: ConversionService,
-  ) {}
+  ) { }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -39,7 +39,7 @@ export class AuthController {
     // console.log('accessToken ', accessToken);
     // console.log('refreshToken ', refreshToken);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    //await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return { accessToken, refreshToken };
   }
