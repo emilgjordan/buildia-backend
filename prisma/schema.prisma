@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int            @id @default(autoincrement())
+  email           String         @unique
+  username        String         @unique
+  firstName       String
+  lastName        String
+  hashedPassword  String
+  bio             String?
+  role            String         @default("USER")
+  projects        UserProjects[]
+  createdProjects Project[]
+  joinRequests    JoinRequest[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  refreshTokens   RefreshToken[]
+}
+
+model Project {
+  id           Int            @id @default(autoincrement())
+  title        String
+  description  String
+  members      UserProjects[]
+  creator      User           @relation(fields: [creatorId], references: [id])
+  creatorId    Int
+  tags         String[]       @default([])
+  likes        Int            @default(0)
+  joinRequests JoinRequest[]
+  public       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model UserProjects {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId Int
+  joinedAt  DateTime @default(now())
+
+  @@id([userId, projectId])
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model JoinRequest {
+  id        Int      @id @default(autoincrement())
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  status    Status   @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}

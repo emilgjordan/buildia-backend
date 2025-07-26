@@ -2,41 +2,29 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtExceptionFilter } from './common/filters/jwt-exceptions.filter';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+
+  const configService = app.get(ConfigService)
   const PORT = configService.get<number>('PORT');
 
-  // console.log(configService.get('jwt.signOptions').expiresIn);
-
   app.enableCors({
-    //    origin: ['http://172.20.10.10:5500', 'http://0.0.0.0:5500'],
-    // origin: 'http://localhost:5173',
-    origin: '*',
-    methods: 'GET, PATCH, PUT, DELETE',
-    allowedHeaders: 'Content-Type, Authorization, X-Requested-With',
-    credentials: true,
-  });
+    origin: 'http://localhost:5173',
+    credentials: true
+  })
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  app.use(cookieParser())
 
-  app.use(cookieParser());
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true, // <- turn on transformation
+    whitelist: true, // optional, recommended to strip unknown properties
+    forbidNonWhitelisted: true // optional, recommended
+  }));
 
-  await app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
+  await app.listen(PORT || 3000, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT || 3000}`);
   });
 }
-
 bootstrap();

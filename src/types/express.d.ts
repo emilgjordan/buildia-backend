@@ -1,9 +1,9 @@
 // express.d.ts
 import { Request } from 'express';
-import { User } from '../users/models/user.model'; // Adjust the import path as necessary
+import { User } from '@prisma/client'
 
 declare module 'express' {
-  export interface Request {
-    user?: User;
-  }
+    export interface Request {
+        user?: User;
+    }
 }
